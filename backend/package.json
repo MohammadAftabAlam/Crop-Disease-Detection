@@ -1,0 +1,26 @@
+{
+  "name": "ai-crop-disease-backend",
+  "version": "1.0.0",
+  "description": "Backend for AI-Based Crop Disease Detection Web Application",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.20.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "form-data": "^4.0.6",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.10.1",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.0.10"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
