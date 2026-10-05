@@ -1,0 +1,16 @@
+# Experiment A (Step 2 baseline): train on lab photos only, like most student projects.
+# Evaluate on PlantVillage test AND PlantDoc test to show the lab -> field gap.
+model: mobilenetv3_large_100.ra_in1k
+image_size: 224
+epochs: 10
+freeze_epochs: 1
+batch_size: 64
+lr: 1.0e-3
+train:
+  - { manifest: data/manifests/plantvillage.csv, split: train }
+val:
+  - { manifest: data/manifests/plantvillage.csv, split: val }
+check_leakage_against:
+  - { manifest: data/manifests/plantvillage.csv, split: test }
+  - { manifest: data/manifests/plantdoc.csv, split: test }
+output: artifacts/exp_a_pv_only_mobilenetv3

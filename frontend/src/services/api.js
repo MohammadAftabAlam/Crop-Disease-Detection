@@ -23,4 +23,23 @@ api.interceptors.request.use(
   }
 );
 
+// A stored token that the server rejects (expired, or the user was removed)
+// would otherwise leave the app half logged-in. Clear it and go to login.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error.response?.status === 401 &&
+      localStorage.getItem("token") &&
+      !error.config?.url?.startsWith("/auth/")
+    ) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.assign("/login");
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default api;

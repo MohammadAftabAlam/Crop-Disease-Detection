@@ -1,0 +1,24 @@
+{
+  "_about": "Approximate infection-favourable conditions per disease code, from general plant pathology references. Risk = number of forecast hours in the next 72 h meeting the temperature range AND humidity condition. Verify and tune with your agriculture faculty.",
+  "levels": { "mediumHours": 8, "highHours": 24 },
+  "rules": [
+    { "code": "potato__late_blight", "tempMin": 10, "tempMax": 25, "minHumidity": 90 },
+    { "code": "tomato__late_blight", "tempMin": 10, "tempMax": 25, "minHumidity": 90 },
+    { "code": "potato__early_blight", "tempMin": 20, "tempMax": 30, "minHumidity": 80 },
+    { "code": "tomato__early_blight", "tempMin": 20, "tempMax": 30, "minHumidity": 80 },
+    { "code": "pepper__bacterial_spot", "tempMin": 24, "tempMax": 30, "minHumidity": 85 },
+    { "code": "tomato__bacterial_spot", "tempMin": 24, "tempMax": 30, "minHumidity": 85 },
+    { "code": "tomato__leaf_mold", "tempMin": 18, "tempMax": 27, "minHumidity": 85 },
+    { "code": "tomato__septoria_leaf_spot", "tempMin": 16, "tempMax": 27, "minHumidity": 85 },
+    { "code": "tomato__target_spot", "tempMin": 20, "tempMax": 30, "minHumidity": 85 },
+    { "code": "tomato__spider_mites", "tempMin": 27, "tempMax": 40, "maxHumidity": 50 },
+    { "code": "maize__gray_leaf_spot", "tempMin": 22, "tempMax": 30, "minHumidity": 90 },
+    { "code": "maize__common_rust", "tempMin": 16, "tempMax": 25, "minHumidity": 90 },
+    { "code": "maize__northern_leaf_blight", "tempMin": 18, "tempMax": 27, "minHumidity": 90 },
+    { "code": "rice__leaf_blast", "tempMin": 20, "tempMax": 28, "minHumidity": 90 },
+    { "code": "rice__brown_spot", "tempMin": 25, "tempMax": 30, "minHumidity": 85 },
+    { "code": "rice__bacterial_leaf_blight", "tempMin": 25, "tempMax": 34, "minHumidity": 80 },
+    { "code": "wheat__yellow_rust", "tempMin": 8, "tempMax": 16, "minHumidity": 85 },
+    { "code": "wheat__brown_rust", "tempMin": 15, "tempMax": 25, "minHumidity": 85 }
+  ]
+}

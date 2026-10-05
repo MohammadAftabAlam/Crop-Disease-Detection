@@ -1,4 +1,8 @@
 import React, { useRef, useState } from "react";
+import {
+  MAX_IMAGE_SIZE,
+  SUPPORTED_IMAGE_TYPES,
+} from "../utils/constants";
 
 function ImageUploader({ onImageSelect }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -13,13 +17,13 @@ function ImageUploader({ onImageSelect }) {
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      setError("Please select a valid image file.");
+    if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+      setError("Please select a JPG, PNG or WEBP image.");
       setSelectedImage(null);
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > MAX_IMAGE_SIZE) {
       setError("Image size must be less than 10 MB.");
       setSelectedImage(null);
       return;
@@ -66,7 +70,7 @@ function ImageUploader({ onImageSelect }) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept={SUPPORTED_IMAGE_TYPES.join(",")}
         onChange={handleFileChange}
         hidden
       />
@@ -92,7 +96,7 @@ function ImageUploader({ onImageSelect }) {
           </button>
 
           <span className="upload-hint">
-            Supported formats: JPG, JPEG, PNG • Maximum size: 10 MB
+            Supported formats: JPG, PNG, WEBP • Maximum size: 10 MB
           </span>
 
         </div>

@@ -1,0 +1,1075 @@
+[
+  {
+    "crop": "Pepper",
+    "diseaseName": "Bacterial Spot",
+    "description": "A bacterial disease that causes spots and lesions on pepper leaves and fruits.",
+    "symptoms": [
+      "Small dark spots on leaves",
+      "Yellowing around leaf spots",
+      "Lesions on fruits"
+    ],
+    "causes": [
+      "Bacterial infection",
+      "High humidity",
+      "Water splashing between plants"
+    ],
+    "remedies": [
+      "Remove infected leaves",
+      "Avoid overhead watering",
+      "Maintain good field sanitation"
+    ],
+    "prevention": [
+      "Use healthy planting material",
+      "Avoid excessive leaf wetness",
+      "Maintain proper plant spacing"
+    ],
+    "code": "pepper__bacterial_spot",
+    "pathogen": "Bacteria (Xanthomonas species)",
+    "favourableConditions": "Warm (24-30 °C), wet weather; spread by rain splash and overhead irrigation",
+    "organicControl": [
+      "Remove and destroy infected leaves and fruit",
+      "Avoid working in the field when plants are wet"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Pepper",
+    "diseaseName": "Healthy",
+    "description": "The pepper plant shows no visible symptoms of the diseases included in the trained model.",
+    "symptoms": [
+      "Healthy green leaves",
+      "Normal plant growth",
+      "No visible disease spots"
+    ],
+    "causes": [
+      "No visible disease detected"
+    ],
+    "remedies": [
+      "Continue proper watering and nutrition",
+      "Provide sufficient sunlight",
+      "Monitor the plant regularly"
+    ],
+    "prevention": [
+      "Maintain proper irrigation",
+      "Keep the growing area clean",
+      "Regularly inspect leaves"
+    ],
+    "code": "pepper__healthy",
+    "pathogen": null,
+    "favourableConditions": null,
+    "organicControl": [],
+    "chemicalControl": [],
+    "sources": []
+  },
+  {
+    "crop": "Potato",
+    "diseaseName": "Early Blight",
+    "description": "A fungal disease that commonly produces dark spots and lesions on potato leaves.",
+    "symptoms": [
+      "Dark circular spots on leaves",
+      "Concentric ring patterns",
+      "Yellowing of affected leaves"
+    ],
+    "causes": [
+      "Fungal infection",
+      "Warm and humid conditions",
+      "Poor plant sanitation"
+    ],
+    "remedies": [
+      "Remove infected leaves",
+      "Avoid overhead watering",
+      "Maintain proper plant spacing"
+    ],
+    "prevention": [
+      "Practice crop rotation",
+      "Remove infected plant debris",
+      "Maintain good field sanitation"
+    ],
+    "code": "potato__early_blight",
+    "pathogen": "Fungus (Alternaria solani)",
+    "favourableConditions": "Warm weather (about 20-30 °C) with alternating wet and dry periods; older and stressed leaves are attacked first",
+    "organicControl": [
+      "Use bio-agents such as Trichoderma viride or Pseudomonas fluorescens (seed/soil treatment or spray) as recommended by your local agriculture office"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Potato",
+    "diseaseName": "Healthy",
+    "description": "The potato plant shows no visible symptoms of the diseases included in the trained model.",
+    "symptoms": [
+      "Healthy green foliage",
+      "Normal plant development",
+      "No visible disease lesions"
+    ],
+    "causes": [
+      "No visible disease detected"
+    ],
+    "remedies": [
+      "Continue proper irrigation",
+      "Provide adequate nutrition",
+      "Monitor the crop regularly"
+    ],
+    "prevention": [
+      "Use healthy planting material",
+      "Maintain field sanitation",
+      "Regularly inspect plants"
+    ],
+    "code": "potato__healthy",
+    "pathogen": null,
+    "favourableConditions": null,
+    "organicControl": [],
+    "chemicalControl": [],
+    "sources": []
+  },
+  {
+    "crop": "Potato",
+    "diseaseName": "Late Blight",
+    "description": "A serious potato disease that can cause dark lesions on leaves and rapid deterioration of plant tissue.",
+    "symptoms": [
+      "Dark irregular leaf lesions",
+      "Brown or black areas on foliage",
+      "Rapid leaf deterioration"
+    ],
+    "causes": [
+      "Fungal-like pathogen infection",
+      "Cool and humid conditions",
+      "Prolonged leaf wetness"
+    ],
+    "remedies": [
+      "Remove severely infected plant material",
+      "Avoid prolonged leaf wetness",
+      "Improve air circulation"
+    ],
+    "prevention": [
+      "Use healthy planting material",
+      "Avoid excessive irrigation",
+      "Maintain good field sanitation"
+    ],
+    "code": "potato__late_blight",
+    "pathogen": "Oomycete (Phytophthora infestans)",
+    "favourableConditions": "Cool (about 10-25 °C), very humid (RH above 90%) weather with fog, dew or drizzle; can destroy a field within days",
+    "organicControl": [
+      "Remove and destroy infected plants away from the field",
+      "Do not leave cull potatoes in heaps near the field"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Bacterial Spot",
+    "description": "A bacterial disease that produces small dark spots on tomato leaves and fruits.",
+    "symptoms": [
+      "Small dark spots on leaves",
+      "Yellowing around lesions",
+      "Spots on fruits"
+    ],
+    "causes": [
+      "Bacterial infection",
+      "High humidity",
+      "Water splashing"
+    ],
+    "remedies": [
+      "Remove affected leaves",
+      "Avoid overhead irrigation",
+      "Improve air circulation"
+    ],
+    "prevention": [
+      "Use healthy seeds",
+      "Avoid wetting foliage",
+      "Maintain field sanitation"
+    ],
+    "code": "tomato__bacterial_spot",
+    "pathogen": "Bacteria (Xanthomonas species)",
+    "favourableConditions": "Warm (24-30 °C), wet weather; spread by rain splash, wind-driven rain and handling",
+    "organicControl": [
+      "Remove and destroy infected leaves",
+      "Avoid handling plants when wet"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Early Blight",
+    "description": "A fungal disease that causes characteristic dark lesions on tomato leaves.",
+    "symptoms": [
+      "Dark spots on older leaves",
+      "Concentric ring patterns",
+      "Leaf yellowing"
+    ],
+    "causes": [
+      "Fungal infection",
+      "Warm humid weather",
+      "Poor sanitation"
+    ],
+    "remedies": [
+      "Remove infected leaves",
+      "Avoid overhead watering",
+      "Maintain proper plant spacing"
+    ],
+    "prevention": [
+      "Practice crop rotation",
+      "Remove plant debris",
+      "Maintain good air circulation"
+    ],
+    "code": "tomato__early_blight",
+    "pathogen": "Fungus (Alternaria solani / Alternaria linariae)",
+    "favourableConditions": "Warm weather (about 20-30 °C) with long periods of leaf wetness",
+    "organicControl": [
+      "Use bio-agents such as Trichoderma viride or Pseudomonas fluorescens (seed/soil treatment or spray) as recommended by your local agriculture office"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Healthy",
+    "description": "The tomato plant shows no visible symptoms of the diseases included in the trained model.",
+    "symptoms": [
+      "Healthy green leaves",
+      "Normal plant growth",
+      "No visible disease symptoms"
+    ],
+    "causes": [
+      "No visible disease detected"
+    ],
+    "remedies": [
+      "Continue proper watering",
+      "Provide adequate sunlight",
+      "Monitor the plant regularly"
+    ],
+    "prevention": [
+      "Maintain good nutrition",
+      "Keep the growing area clean",
+      "Inspect plants regularly"
+    ],
+    "code": "tomato__healthy",
+    "pathogen": null,
+    "favourableConditions": null,
+    "organicControl": [],
+    "chemicalControl": [],
+    "sources": []
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Late Blight",
+    "description": "A serious disease that can cause dark lesions and rapid damage to tomato foliage.",
+    "symptoms": [
+      "Dark irregular lesions",
+      "Brown or black patches",
+      "Rapid leaf damage"
+    ],
+    "causes": [
+      "Pathogen infection",
+      "Cool humid conditions",
+      "Prolonged leaf moisture"
+    ],
+    "remedies": [
+      "Remove infected plant material",
+      "Avoid overhead watering",
+      "Improve air circulation"
+    ],
+    "prevention": [
+      "Maintain field sanitation",
+      "Avoid excessive moisture",
+      "Regularly inspect plants"
+    ],
+    "code": "tomato__late_blight",
+    "pathogen": "Oomycete (Phytophthora infestans)",
+    "favourableConditions": "Cool (about 10-25 °C), very humid (RH above 90%) weather; spreads very fast",
+    "organicControl": [
+      "Remove and destroy infected plants away from the field"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Leaf Mold",
+    "description": "A fungal disease that commonly develops under humid conditions and affects tomato leaves.",
+    "symptoms": [
+      "Yellow patches on upper leaf surfaces",
+      "Mold growth on leaf undersides",
+      "Leaf curling or drying"
+    ],
+    "causes": [
+      "Fungal infection",
+      "High humidity",
+      "Poor air circulation"
+    ],
+    "remedies": [
+      "Improve air circulation",
+      "Reduce excess humidity",
+      "Remove severely affected leaves"
+    ],
+    "prevention": [
+      "Avoid excessive humidity",
+      "Provide proper plant spacing",
+      "Avoid wetting leaves"
+    ],
+    "code": "tomato__leaf_mold",
+    "pathogen": "Fungus (Passalora fulva, syn. Cladosporium fulvum)",
+    "favourableConditions": "High humidity (above 85%) and moderate temperatures, common in poorly ventilated polyhouses",
+    "organicControl": [
+      "Use bio-agents such as Trichoderma viride or Pseudomonas fluorescens (seed/soil treatment or spray) as recommended by your local agriculture office"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Septoria Leaf Spot",
+    "description": "A fungal disease that causes numerous small spots on tomato leaves.",
+    "symptoms": [
+      "Small circular leaf spots",
+      "Dark margins around spots",
+      "Yellowing and dropping of leaves"
+    ],
+    "causes": [
+      "Fungal infection",
+      "Moist conditions",
+      "Infected plant debris"
+    ],
+    "remedies": [
+      "Remove infected leaves",
+      "Avoid overhead watering",
+      "Maintain good garden sanitation"
+    ],
+    "prevention": [
+      "Remove fallen leaves",
+      "Practice crop rotation",
+      "Improve air circulation"
+    ],
+    "code": "tomato__septoria_leaf_spot",
+    "pathogen": "Fungus (Septoria lycopersici)",
+    "favourableConditions": "Moderate temperatures (about 20-25 °C) with wet leaves; spread by rain splash",
+    "organicControl": [
+      "Use bio-agents such as Trichoderma viride or Pseudomonas fluorescens (seed/soil treatment or spray) as recommended by your local agriculture office"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Spider Mites",
+    "description": "A pest infestation that can damage tomato leaves by feeding on plant tissues.",
+    "symptoms": [
+      "Tiny yellow or pale spots",
+      "Leaf discoloration",
+      "Fine webbing on leaves"
+    ],
+    "causes": [
+      "Spider mite infestation",
+      "Hot and dry conditions",
+      "Plant stress"
+    ],
+    "remedies": [
+      "Inspect the undersides of leaves",
+      "Remove heavily affected leaves",
+      "Use appropriate pest management practices"
+    ],
+    "prevention": [
+      "Monitor plants regularly",
+      "Reduce plant stress",
+      "Maintain suitable growing conditions"
+    ],
+    "code": "tomato__spider_mites",
+    "pathogen": "Pest (two-spotted spider mite, Tetranychus urticae)",
+    "favourableConditions": "Hot, dry weather (above about 27 °C, low humidity) and dusty plants",
+    "organicControl": [
+      "Spray a neem oil (azadirachtin) formulation, following the label",
+      "Spray water on the undersides of leaves to dislodge mites"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Target Spot",
+    "description": "A fungal disease that produces circular target-like lesions on tomato leaves and plant parts.",
+    "symptoms": [
+      "Circular dark spots",
+      "Target-like ring patterns",
+      "Leaf yellowing"
+    ],
+    "causes": [
+      "Fungal infection",
+      "High humidity",
+      "Poor air circulation"
+    ],
+    "remedies": [
+      "Remove affected leaves",
+      "Improve air circulation",
+      "Avoid overhead watering"
+    ],
+    "prevention": [
+      "Maintain proper plant spacing",
+      "Remove infected plant debris",
+      "Keep foliage dry"
+    ],
+    "code": "tomato__target_spot",
+    "pathogen": "Fungus (Corynespora cassiicola)",
+    "favourableConditions": "Warm, humid weather with long periods of leaf wetness",
+    "organicControl": [
+      "Use bio-agents such as Trichoderma viride or Pseudomonas fluorescens (seed/soil treatment or spray) as recommended by your local agriculture office"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Mosaic Virus",
+    "description": "A viral disease that can cause mosaic patterns and abnormal leaf growth in tomato plants.",
+    "symptoms": [
+      "Mosaic patterns on leaves",
+      "Light and dark green patches",
+      "Distorted leaf growth"
+    ],
+    "causes": [
+      "Viral infection",
+      "Infected plant material",
+      "Contaminated tools or contact"
+    ],
+    "remedies": [
+      "Remove infected plants or plant material",
+      "Disinfect tools",
+      "Control weeds around the crop"
+    ],
+    "prevention": [
+      "Use healthy planting material",
+      "Disinfect gardening tools",
+      "Avoid spreading infection between plants"
+    ],
+    "code": "tomato__mosaic_virus",
+    "pathogen": "Virus (Tomato mosaic virus, a tobamovirus); spread by contact, tools, hands and seed",
+    "favourableConditions": "Not weather-driven; spreads through handling and infected seed or plant debris",
+    "organicControl": [
+      "There is no cure: uproot and destroy infected plants",
+      "Wash hands and disinfect tools before touching healthy plants"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "crop": "Tomato",
+    "diseaseName": "Yellow Leaf Curl Virus",
+    "description": "A viral disease that can cause yellowing, curling and stunted growth of tomato leaves.",
+    "symptoms": [
+      "Yellowing of leaves",
+      "Upward curling of leaves",
+      "Stunted plant growth"
+    ],
+    "causes": [
+      "Viral infection",
+      "Whitefly transmission",
+      "Infected plant material"
+    ],
+    "remedies": [
+      "Remove severely infected plants",
+      "Control whitefly populations",
+      "Remove weeds around the crop"
+    ],
+    "prevention": [
+      "Use healthy seedlings",
+      "Control insect vectors",
+      "Maintain good field sanitation"
+    ],
+    "code": "tomato__yellow_leaf_curl_virus",
+    "pathogen": "Virus (Tomato yellow leaf curl virus, a begomovirus) spread by whiteflies",
+    "favourableConditions": "Warm, dry periods when whitefly numbers are high",
+    "organicControl": [
+      "There is no cure: uproot and destroy infected plants early",
+      "Use yellow sticky traps to monitor and reduce whiteflies",
+      "Spray a neem oil (azadirachtin) formulation, following the label"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "maize__gray_leaf_spot",
+    "crop": "Maize",
+    "diseaseName": "Gray Leaf Spot",
+    "pathogen": "Fungus (Cercospora zeae-maydis)",
+    "description": "A fungal leaf disease of maize that causes long rectangular grey-brown lesions limited by leaf veins.",
+    "symptoms": [
+      "Narrow, rectangular grey to tan lesions running parallel to the veins",
+      "Lesions join and blight whole leaves",
+      "Lower leaves are affected first"
+    ],
+    "causes": [
+      "Fungus surviving on maize residue",
+      "Continuous maize cropping"
+    ],
+    "favourableConditions": "Warm (about 22-30 °C), very humid weather with long dew periods",
+    "remedies": [
+      "Remove heavily infected lower leaves where practical",
+      "Avoid excess nitrogen and dense planting"
+    ],
+    "organicControl": [
+      "Use bio-agents such as Trichoderma viride or Pseudomonas fluorescens (seed/soil treatment or spray) as recommended by your local agriculture office"
+    ],
+    "prevention": [
+      "Rotate with non-cereal crops",
+      "Bury or remove maize residue after harvest",
+      "Grow tolerant hybrids"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "maize__common_rust",
+    "crop": "Maize",
+    "diseaseName": "Common Rust",
+    "pathogen": "Fungus (Puccinia sorghi)",
+    "description": "A rust disease producing small powdery brick-red pustules on both leaf surfaces.",
+    "symptoms": [
+      "Small, oval, cinnamon-brown powdery pustules on both sides of the leaf",
+      "Pustules turn dark brown to black late in the season",
+      "Heavy infection makes leaves yellow and dry"
+    ],
+    "causes": [
+      "Windborne rust spores"
+    ],
+    "favourableConditions": "Moderate temperatures (about 16-25 °C) with high humidity or dew",
+    "remedies": [
+      "Monitor fields after cool, humid spells",
+      "Remove volunteer maize near the field"
+    ],
+    "organicControl": [],
+    "prevention": [
+      "Grow resistant hybrids",
+      "Sow at the recommended time"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "maize__northern_leaf_blight",
+    "crop": "Maize",
+    "diseaseName": "Northern Leaf Blight",
+    "pathogen": "Fungus (Exserohilum turcicum)",
+    "description": "A fungal disease causing long cigar-shaped grey-green lesions on maize leaves.",
+    "symptoms": [
+      "Long (2.5-15 cm) elliptical, cigar-shaped grey-green to tan lesions",
+      "Lesions start on lower leaves and move up",
+      "Severe infection blights whole leaves before grain fill"
+    ],
+    "causes": [
+      "Fungus surviving on infected maize residue"
+    ],
+    "favourableConditions": "Moderate temperatures (about 18-27 °C) with heavy dew and humid weather",
+    "remedies": [
+      "Remove and destroy badly infected leaves",
+      "Avoid dense planting"
+    ],
+    "organicControl": [
+      "Use bio-agents such as Trichoderma viride or Pseudomonas fluorescens (seed/soil treatment or spray) as recommended by your local agriculture office"
+    ],
+    "prevention": [
+      "Crop rotation",
+      "Destroy or bury residue after harvest",
+      "Grow resistant hybrids"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "maize__healthy",
+    "crop": "Maize",
+    "diseaseName": "Healthy",
+    "pathogen": null,
+    "description": "The maize plant shows no visible symptoms of the diseases included in the model.",
+    "symptoms": [
+      "Healthy green leaves",
+      "Normal plant growth",
+      "No visible disease spots"
+    ],
+    "causes": [
+      "No visible disease detected"
+    ],
+    "favourableConditions": null,
+    "remedies": [
+      "Continue proper irrigation and balanced nutrition",
+      "Monitor the crop regularly"
+    ],
+    "organicControl": [],
+    "prevention": [
+      "Use healthy seed and recommended varieties",
+      "Keep the field clean of crop debris and weeds",
+      "Inspect leaves every week"
+    ],
+    "chemicalControl": [],
+    "sources": []
+  },
+  {
+    "code": "rice__bacterial_leaf_blight",
+    "crop": "Rice",
+    "diseaseName": "Bacterial Leaf Blight",
+    "pathogen": "Bacteria (Xanthomonas oryzae pv. oryzae)",
+    "description": "A serious bacterial disease of rice causing yellowing and drying of leaves from the tips and edges.",
+    "symptoms": [
+      "Water-soaked yellowish stripes starting at the leaf tip or edges",
+      "Lesions turn straw-yellow to white and dry",
+      "Milky bacterial ooze on young lesions in the morning",
+      "Wilting of seedlings (kresek) in severe cases"
+    ],
+    "causes": [
+      "Infected seed and stubble",
+      "Spread through irrigation water, rain and wind"
+    ],
+    "favourableConditions": "Warm (about 25-34 °C), humid weather with rain and strong winds; high nitrogen worsens it",
+    "remedies": [
+      "Drain the field for a few days if water stands",
+      "Avoid excess nitrogen; apply nitrogen in splits",
+      "Do not move water from infected to healthy fields"
+    ],
+    "organicControl": [
+      "Seed treatment with Pseudomonas fluorescens as recommended locally"
+    ],
+    "prevention": [
+      "Use resistant varieties",
+      "Use clean, treated seed",
+      "Remove weeds and stubble that host the bacteria"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "rice__brown_spot",
+    "crop": "Rice",
+    "diseaseName": "Brown Spot",
+    "pathogen": "Fungus (Bipolaris oryzae)",
+    "description": "A fungal disease causing oval brown spots on rice leaves; common in nutrient-poor soils.",
+    "symptoms": [
+      "Oval brown spots with a grey or whitish centre",
+      "Spots may have a yellow halo",
+      "Discoloured grains in severe cases"
+    ],
+    "causes": [
+      "Infected seed",
+      "Nutrient deficiency (especially potassium and silicon) and water stress"
+    ],
+    "favourableConditions": "Warm (about 25-30 °C), humid weather; weak, nutrient-starved crops",
+    "remedies": [
+      "Correct nutrient deficiencies with balanced fertiliser",
+      "Avoid water stress"
+    ],
+    "organicControl": [
+      "Use bio-agents such as Trichoderma viride or Pseudomonas fluorescens (seed/soil treatment or spray) as recommended by your local agriculture office"
+    ],
+    "prevention": [
+      "Use healthy, treated seed",
+      "Apply recommended potassium and organic manure",
+      "Grow tolerant varieties"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "rice__leaf_blast",
+    "crop": "Rice",
+    "diseaseName": "Leaf Blast",
+    "pathogen": "Fungus (Magnaporthe oryzae)",
+    "description": "One of the most destructive rice diseases, causing diamond-shaped lesions on leaves.",
+    "symptoms": [
+      "Spindle or diamond-shaped spots with grey centres and brown borders",
+      "Lesions join and kill whole leaves",
+      "Can also attack nodes and the neck of the panicle (neck blast)"
+    ],
+    "causes": [
+      "Airborne spores",
+      "Excess nitrogen"
+    ],
+    "favourableConditions": "Moderate temperatures (about 20-28 °C), high humidity (above 90%) and long leaf wetness from dew",
+    "remedies": [
+      "Avoid excess nitrogen; apply in splits",
+      "Keep the field flooded where recommended (dry fields favour blast)"
+    ],
+    "organicControl": [
+      "Use bio-agents such as Trichoderma viride or Pseudomonas fluorescens (seed/soil treatment or spray) as recommended by your local agriculture office"
+    ],
+    "prevention": [
+      "Use resistant varieties",
+      "Use treated seed",
+      "Remove infected stubble and weed hosts"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "rice__healthy",
+    "crop": "Rice",
+    "diseaseName": "Healthy",
+    "pathogen": null,
+    "description": "The rice plant shows no visible symptoms of the diseases included in the model.",
+    "symptoms": [
+      "Healthy green leaves",
+      "Normal plant growth",
+      "No visible disease spots"
+    ],
+    "causes": [
+      "No visible disease detected"
+    ],
+    "favourableConditions": null,
+    "remedies": [
+      "Continue proper irrigation and balanced nutrition",
+      "Monitor the crop regularly"
+    ],
+    "organicControl": [],
+    "prevention": [
+      "Use healthy seed and recommended varieties",
+      "Keep the field clean of crop debris and weeds",
+      "Inspect leaves every week"
+    ],
+    "chemicalControl": [],
+    "sources": []
+  },
+  {
+    "code": "wheat__brown_rust",
+    "crop": "Wheat",
+    "diseaseName": "Brown Rust",
+    "pathogen": "Fungus (Puccinia triticina)",
+    "description": "Leaf rust of wheat, producing scattered orange-brown pustules on leaves.",
+    "symptoms": [
+      "Small, round, orange-brown powdery pustules scattered on the upper leaf surface",
+      "Pustules leave rusty powder on fingers",
+      "Heavily infected leaves dry early"
+    ],
+    "causes": [
+      "Windborne rust spores"
+    ],
+    "favourableConditions": "Moderate temperatures (about 15-25 °C) with dew or high humidity",
+    "remedies": [
+      "Monitor fields regularly from tillering onwards",
+      "Report widespread infection to the local agriculture office"
+    ],
+    "organicControl": [],
+    "prevention": [
+      "Grow resistant varieties recommended for your zone",
+      "Sow at the recommended time",
+      "Avoid excess nitrogen"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "wheat__yellow_rust",
+    "crop": "Wheat",
+    "diseaseName": "Yellow Rust",
+    "pathogen": "Fungus (Puccinia striiformis f. sp. tritici)",
+    "description": "Stripe rust of wheat, producing yellow pustules in long stripes; serious in cool weather in North India.",
+    "symptoms": [
+      "Bright yellow powdery pustules arranged in stripes between the veins",
+      "Yellow powder rubs off on fingers",
+      "Starts in patches and spreads quickly in cool weather"
+    ],
+    "causes": [
+      "Windborne rust spores"
+    ],
+    "favourableConditions": "Cool weather (about 10-15 °C) with dew, fog or light rain",
+    "remedies": [
+      "Inspect fields often during cool, humid weeks",
+      "Report patches early to the local agriculture office"
+    ],
+    "organicControl": [],
+    "prevention": [
+      "Grow resistant varieties recommended for your zone",
+      "Avoid late sowing",
+      "Avoid excess nitrogen"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "wheat__healthy",
+    "crop": "Wheat",
+    "diseaseName": "Healthy",
+    "pathogen": null,
+    "description": "The wheat plant shows no visible symptoms of the diseases included in the model.",
+    "symptoms": [
+      "Healthy green leaves",
+      "Normal plant growth",
+      "No visible disease spots"
+    ],
+    "causes": [
+      "No visible disease detected"
+    ],
+    "favourableConditions": null,
+    "remedies": [
+      "Continue proper irrigation and balanced nutrition",
+      "Monitor the crop regularly"
+    ],
+    "organicControl": [],
+    "prevention": [
+      "Use healthy seed and recommended varieties",
+      "Keep the field clean of crop debris and weeds",
+      "Inspect leaves every week"
+    ],
+    "chemicalControl": [],
+    "sources": []
+  }
+]

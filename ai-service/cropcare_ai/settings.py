@@ -1,0 +1,36 @@
+"""Runtime settings, read from environment variables prefixed with CROPCARE_ (or ai-service/.env)."""
+
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+SERVICE_DIR = Path(__file__).resolve().parent.parent
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="CROPCARE_", env_file=SERVICE_DIR / ".env", extra="ignore")
+
+    host: str = "127.0.0.1"
+    port: int = 8000
+
+    taxonomy_path: Path = SERVICE_DIR / "configs" / "taxonomy.yaml"
+    classifier_dir: Path = SERVICE_DIR / "artifacts" / "classifier"
+    severity_dir: Path = SERVICE_DIR / "artifacts" / "severity"
+
+    device: str = "cpu"
+
+    # "energy" uses the classifier's own logits; "bioclip" adds a zero-shot plant check
+    # (needs open_clip_torch and a ~600 MB download); "off" disables the gate.
+    gate: str = "energy"
+    # BioCLIP: minimum probability that the photo shows a leaf of a supported crop.
+    # Real field leaves scored 0.44-0.98 in testing; non-plant photos scored below 0.01.
+    bioclip_threshold: float = 0.3
+
+    max_images: int = 5
+    max_image_mb: int = 10
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

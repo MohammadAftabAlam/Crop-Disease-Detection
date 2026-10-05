@@ -1,0 +1,12 @@
+-r requirements.txt
+
+# Exporting for offline use
+onnx
+onnxruntime
+
+# Optional BioCLIP plant gate (CROPCARE_GATE=bioclip)
+# open_clip_torch
+
+# Tests
+pytest
+httpx

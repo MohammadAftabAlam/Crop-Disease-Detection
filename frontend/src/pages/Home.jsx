@@ -1,9 +1,15 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
+import useModelInfo from "../hooks/useModelInfo";
 
 function Home() {
   const [selectedFeature, setSelectedFeature] = useState(null);
+
+  // Real numbers from training/evaluate.py instead of a hard-coded accuracy
+  const modelInfo = useModelInfo();
+  const accuracy = modelInfo?.metrics?.accuracy;
+  const classCount = modelInfo?.classes?.length || 15;
 
   const closeFeature = () => {
     setSelectedFeature(null);
@@ -57,12 +63,16 @@ function Home() {
           <div className="hero-trust">
 
             <div>
-              <strong>95.12%</strong>
-              <span>Test Accuracy</span>
+              <strong>
+                {typeof accuracy === "number"
+                  ? `${(accuracy * 100).toFixed(2)}%`
+                  : "—"}
+              </strong>
+              <span>Lab Test Accuracy</span>
             </div>
 
             <div>
-              <strong>15+</strong>
+              <strong>{classCount}</strong>
               <span>Disease Classes</span>
             </div>
 

@@ -1,4 +1,5 @@
 import React from "react";
+import useModelInfo from "../hooks/useModelInfo";
 
 function PredictionCard({
   crop = "Unknown Crop",
@@ -8,8 +9,8 @@ function PredictionCard({
 }) {
   const confidenceValue = Number(confidence);
 
-  // Actual accuracy calculated on 2070 unseen test images
-  const testAccuracy = 95.12;
+  // Measured by ai-service/training/evaluate.py; absent until the model is evaluated
+  const metrics = useModelInfo()?.metrics;
 
   return (
     <div className="prediction-card">
@@ -86,24 +87,28 @@ function PredictionCard({
           </div>
 
           {/* Model Accuracy */}
-          <div className="accuracy-section">
+          {metrics && (
+            <div className="accuracy-section">
 
-            <div className="accuracy-icon">
-              ✓
-            </div>
-
-            <div className="accuracy-content">
-              <div className="accuracy-header">
-                <span>Model Test Accuracy</span>
-                <strong>{testAccuracy}%</strong>
+              <div className="accuracy-icon">
+                ✓
               </div>
 
-              <p className="accuracy-note">
-                Evaluated on 2,070 unseen test images across 15 classes.
-              </p>
-            </div>
+              <div className="accuracy-content">
+                <div className="accuracy-header">
+                  <span>Model Test Accuracy</span>
+                  <strong>{(metrics.accuracy * 100).toFixed(2)}%</strong>
+                </div>
 
-          </div>
+                <p className="accuracy-note">
+                  Measured on {metrics.num_images.toLocaleString()} held-out
+                  images ({metrics.test_set}). Accuracy on real field
+                  photos is usually lower.
+                </p>
+              </div>
+
+            </div>
+          )}
 
           {/* Remedy */}
           <div className="remedy-section">
