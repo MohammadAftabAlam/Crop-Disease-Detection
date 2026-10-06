@@ -18,6 +18,7 @@ from cropcare_ai.inference.severity import SeverityEstimator
 from cropcare_ai.models.bundle import load_classifier, load_segmenter, read_json
 from cropcare_ai.settings import Settings
 from cropcare_ai.taxonomy import Taxonomy
+from cropcare_ai.training.common import forward
 from cropcare_ai.training.metrics import softmax
 
 log = logging.getLogger(__name__)
@@ -123,7 +124,7 @@ class Predictor:
         batch = torch.stack([to_tensor(image, size, mean, std) for image in images]).to(self.device)
 
         with self._lock, torch.no_grad():
-            logits = self.model(batch).float().cpu().numpy()
+            logits = forward(self.model, batch, tta=bool(self.calibration.get("tta"))).cpu().numpy()
         probs = softmax(logits, self.calibration["temperature"])
 
         gate_results = self.energy_gate.check(logits)

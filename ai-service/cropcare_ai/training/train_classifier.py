@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import math
 import time
+from collections import Counter
 from pathlib import Path
 
 import torch
@@ -20,7 +21,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from cropcare_ai.data.datasets import ManifestDataset, balanced_sampler
-from cropcare_ai.data.manifest import check_leakage
+from cropcare_ai.data.manifest import near_duplicates
 from cropcare_ai.data.transforms import eval_transform, train_transform
 from cropcare_ai.models.bundle import ClassifierBundle, create_classifier, read_json, save_classifier, write_json
 from cropcare_ai.settings import get_settings
@@ -40,13 +41,15 @@ DEFAULTS = {
     "weight_decay": 0.05,
     "label_smoothing": 0.1,
     "warmup_epochs": 1,
-    "balanced_sampling": True,
+    "sampling": "class_source",     # class_source | class | none
+    "balanced_sampling": True,     # old name; false means sampling: none
     "patience": 4,
     "num_workers": 4,
     "pretrained": True,
     "seed": 42,
     "max_steps_per_epoch": None,   # only for quick smoke tests
     "check_leakage_against": [],   # manifests whose test/val images must not be in train
+    "near_duplicate_distance": 4,  # dhash bits; -1 = exact copies only
     "model_kwargs": {},            # extra timm arguments, e.g. {img_size: 224} for DINOv2
 }
 
@@ -86,10 +89,14 @@ def train(cfg: dict) -> Path:
     train_rows = load_sources(cfg["train"])
     val_rows = load_sources(cfg["val"])
 
-    leak_rows = val_rows + load_sources(cfg["check_leakage_against"])
-    leaked = check_leakage(train_rows, leak_rows)
-    if leaked:
-        raise SystemExit(f"{leaked} validation/test images also appear in the training data. Fix the manifests.")
+    # Drop training images that are (near-)copies of any validation/test image, e.g. the same
+    # web photo in PlantWild-train and PlantDoc-test. Otherwise field accuracy is inflated.
+    reference_rows = val_rows + load_sources(cfg["check_leakage_against"])
+    duplicate = near_duplicates(train_rows, reference_rows, cfg["near_duplicate_distance"])
+    removed = Counter(row.source for row, dup in zip(train_rows, duplicate) if dup)
+    train_rows = [row for row, dup in zip(train_rows, duplicate) if not dup]
+    if removed:
+        print(f"Removed {sum(removed.values())} training images that duplicate validation/test images: {dict(removed)}")
 
     # Classes = taxonomy classes that have training images, in taxonomy order
     present = {row.class_id for row in train_rows}
@@ -102,7 +109,13 @@ def train(cfg: dict) -> Path:
     if val_set.dropped:
         print(f"Note: {val_set.dropped} validation images belong to classes without training data and are skipped")
 
-    sampler = balanced_sampler(train_set.labels()) if cfg["balanced_sampling"] else None
+    sampling = cfg["sampling"] if cfg["balanced_sampling"] else "none"
+    if sampling == "class_source":
+        sampler = balanced_sampler(train_set.labels(), train_set.sources)
+    elif sampling == "class":
+        sampler = balanced_sampler(train_set.labels())
+    else:
+        sampler = None
     train_loader = DataLoader(train_set, batch_size=cfg["batch_size"], sampler=sampler, shuffle=sampler is None,
                               num_workers=cfg["num_workers"], pin_memory=device == "cuda", drop_last=True,
                               persistent_workers=cfg["num_workers"] > 0)
@@ -172,6 +185,8 @@ def train(cfg: dict) -> Path:
                 training={"config": {k: v for k, v in cfg.items() if k not in ("train", "val")},
                           "train_sources": cfg["train"], "val_sources": cfg["val"],
                           "train_images": len(train_set), "val_images": len(val_set),
+                          "train_images_by_source": dict(Counter(train_set.sources)),
+                          "removed_duplicates": dict(removed),
                           "best_epoch": best_epoch, "best_val_macro_f1": best_f1, "history": history},
             )
             save_classifier(model, bundle, output)

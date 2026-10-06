@@ -45,7 +45,15 @@ tests/                end-to-end tests on a tiny synthetic dataset (CPU, ~15 s)
 
 ## Train (on Kaggle)
 
-Push this repo to GitHub, then upload `kaggle/cropcare_training.ipynb` to Kaggle and run it.
+Step 3 (current): `kaggle/cropcare_step3.ipynb` trains **Experiment C**: PlantVillage + PlantDoc +
+PlantWild + rice + wheat, source-balanced sampling, 288 px, test-time flip averaging, and training
+photos that are near-duplicates (perceptual hash) of any validation/test photo removed. It compares
+ConvNeXt-Tiny, DINOv2-Small, EfficientNetV2-B0 and MobileNetV3 and writes to `artifacts/c_*`.
+To serve one of them: `CROPCARE_CLASSIFIER_DIR=artifacts/c_convnext_tiny`.
+
+Steps 1-2: `kaggle/cropcare_training.ipynb` (experiments A and B, severity model).
+
+Push this repo to GitHub, then upload the notebook to Kaggle and run it.
 It prepares the datasets, runs experiment A (lab only) and B (lab + field), calibrates,
 evaluates, prints the comparison table, trains the severity model and zips `artifacts/`.
 Unzip that file into `ai-service/artifacts/` on your laptop.

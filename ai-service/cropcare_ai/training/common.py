@@ -47,11 +47,20 @@ def load_sources(sources: list[dict]) -> list[Row]:
     return rows
 
 
+def forward(model: torch.nn.Module, images: torch.Tensor, tta: bool = False) -> torch.Tensor:
+    """Logits; with tta, averaged with the horizontally flipped images (test-time augmentation)."""
+    logits = model(images).float()
+    if tta:
+        logits = (logits + model(torch.flip(images, dims=[3])).float()) / 2
+    return logits
+
+
 @torch.no_grad()
-def collect_logits(model: torch.nn.Module, loader: DataLoader, device: str) -> tuple[np.ndarray, np.ndarray]:
+def collect_logits(model: torch.nn.Module, loader: DataLoader, device: str,
+                   tta: bool = False) -> tuple[np.ndarray, np.ndarray]:
     model.eval()
     all_logits, all_labels = [], []
     for images, labels in loader:
-        all_logits.append(model(images.to(device)).float().cpu())
+        all_logits.append(forward(model, images.to(device), tta).cpu())
         all_labels.append(labels)
     return torch.cat(all_logits).numpy(), torch.cat(all_labels).numpy()

@@ -24,7 +24,9 @@ class ManifestDataset(Dataset):
 
     def __init__(self, rows: list[Row], class_ids: list[str], transform=None):
         index = {class_id: i for i, class_id in enumerate(class_ids)}
-        self.items = [(row.path, index[row.class_id]) for row in rows if row.class_id in index]
+        kept = [row for row in rows if row.class_id in index]
+        self.items = [(row.path, index[row.class_id]) for row in kept]
+        self.sources = [row.source for row in kept]
         self.dropped = len(rows) - len(self.items)
         self.transform = transform
 
@@ -42,11 +44,23 @@ class ManifestDataset(Dataset):
         return [label for _, label in self.items]
 
 
-def balanced_sampler(labels: list[int]) -> WeightedRandomSampler:
-    """Draw every class about equally often, so small field datasets are not drowned out by PlantVillage."""
-    counts = Counter(labels)
-    weights = torch.tensor([1.0 / counts[label] for label in labels], dtype=torch.double)
-    return WeightedRandomSampler(weights, num_samples=len(labels), replacement=True)
+def balanced_sampler(labels: list[int], sources: list[str] | None = None) -> WeightedRandomSampler:
+    """Draw every class about equally often.
+
+    With `sources`, each class's share is also split between datasets in proportion to
+    sqrt(images in that dataset), so 80 PlantDoc photos of a disease are not drowned out
+    by 1,500 PlantVillage photos of it, without repeating the small set excessively.
+    """
+    if sources is None:
+        counts = Counter(labels)
+        weights = [1.0 / counts[label] for label in labels]
+    else:
+        pair_counts = Counter(zip(labels, sources))
+        class_totals: Counter = Counter()
+        for (label, _), n in pair_counts.items():
+            class_totals[label] += n ** 0.5
+        weights = [1.0 / (pair_counts[(l, s)] ** 0.5 * class_totals[l]) for l, s in zip(labels, sources)]
+    return WeightedRandomSampler(torch.tensor(weights, dtype=torch.double), num_samples=len(labels), replacement=True)
 
 
 # ---------------------------------------------------------------------------

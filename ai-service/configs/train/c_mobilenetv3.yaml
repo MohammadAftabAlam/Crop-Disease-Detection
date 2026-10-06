@@ -1,0 +1,33 @@
+# Experiment C backbone comparison: same data and settings as c_convnext_tiny.yaml
+# Data roles:  train -> learning | val below -> choosing the best epoch
+#              plantdoc/rice/wheat val -> calibration only | all test splits -> final report
+# Missing manifests (e.g. no wheat dataset) are skipped with a warning.
+model: mobilenetv3_large_100.ra_in1k
+image_size: 256
+epochs: 15
+freeze_epochs: 1
+batch_size: 64
+lr: 1.0e-3
+backbone_lr_mult: 0.1
+sampling: class_source
+near_duplicate_distance: 4
+train:
+  - { manifest: data/manifests/plantvillage.csv, split: train }
+  - { manifest: data/manifests/plantdoc.csv, split: train }
+  - { manifest: data/manifests/plantwild.csv, split: train }
+  - { manifest: data/manifests/rice.csv, split: train }
+  - { manifest: data/manifests/wheat.csv, split: train }
+val:
+  - { manifest: data/manifests/plantvillage.csv, split: val }
+  - { manifest: data/manifests/plantwild.csv, split: val }
+check_leakage_against:
+  - { manifest: data/manifests/plantvillage.csv, split: test }
+  - { manifest: data/manifests/plantdoc.csv, split: val }
+  - { manifest: data/manifests/plantdoc.csv, split: test }
+  - { manifest: data/manifests/plantwild.csv, split: test }
+  - { manifest: data/manifests/rice.csv, split: val }
+  - { manifest: data/manifests/rice.csv, split: test }
+  - { manifest: data/manifests/wheat.csv, split: val }
+  - { manifest: data/manifests/wheat.csv, split: test }
+  - { manifest: data/manifests/field.csv, split: test }
+output: artifacts/c_mobilenetv3

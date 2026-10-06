@@ -84,6 +84,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--name", required=True, help="Short id, e.g. plantdoc_test")
     parser.add_argument("--description", default="")
     parser.add_argument("--batch-size", type=int, default=64)
+    parser.add_argument("--no-tta", action="store_true", help="Ignore the TTA setting stored in calibration.json")
     parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--device")
     args = parser.parse_args(argv)
@@ -99,7 +100,8 @@ def main(argv: list[str] | None = None) -> None:
     if not len(dataset):
         raise SystemExit("No images of the model's classes in this split.")
     loader = DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers)
-    logits, labels = collect_logits(model, loader, device)
+    tta = bool(calibration.get("tta")) and not args.no_tta
+    logits, labels = collect_logits(model, loader, device, tta=tta)
 
     metrics = evaluate_logits(logits, labels, bundle.class_ids, taxonomy, calibration)
     metrics.update({
@@ -109,6 +111,7 @@ def main(argv: list[str] | None = None) -> None:
         "split": args.split,
         "skipped_unsupported_classes": dataset.dropped,
         "model": bundle.architecture,
+        "tta": tta,
         "evaluated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     })
     write_json(metrics, model_dir / "metrics" / f"{args.name}.json")

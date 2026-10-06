@@ -22,7 +22,7 @@ classes:
   - id: pepper__bacterial_spot
     crop: pepper
     disease: Bacterial Spot
-    aliases: [Pepper__bell___Bacterial_spot, "Pepper,_bell___Bacterial_spot", Bell_pepper leaf spot]
+    aliases: [Pepper__bell___Bacterial_spot, "Pepper,_bell___Bacterial_spot", Bell_pepper leaf spot, Pepper Bell Bacterial Spot]
   - id: pepper__healthy
     crop: pepper
     disease: Healthy
@@ -48,7 +48,7 @@ classes:
   - id: tomato__bacterial_spot
     crop: tomato
     disease: Bacterial Spot
-    aliases: [Tomato_Bacterial_spot, Tomato___Bacterial_spot, Tomato leaf bacterial spot]
+    aliases: [Tomato_Bacterial_spot, Tomato___Bacterial_spot, Tomato leaf bacterial spot, Tomato bacterial leaf spot]
   - id: tomato__early_blight
     crop: tomato
     disease: Early Blight
@@ -95,11 +95,11 @@ classes:
   - id: maize__common_rust
     crop: maize
     disease: Common Rust
-    aliases: [Corn_(maize)___Common_rust_, Corn rust leaf, Corn Common Rust, Common_Rust, Rust]
+    aliases: [Corn_(maize)___Common_rust_, Corn rust leaf, Corn Common Rust, Corn Rust, Common_Rust, Rust]
   - id: maize__northern_leaf_blight
     crop: maize
     disease: Northern Leaf Blight
-    aliases: [Corn_(maize)___Northern_Leaf_Blight, Corn leaf blight, Corn Blight, Blight, Northern Corn Leaf Blight]
+    aliases: [Corn_(maize)___Northern_Leaf_Blight, Corn leaf blight, Corn Blight, Corn Northern Leaf Blight, Blight, Northern Corn Leaf Blight]
   - id: maize__healthy
     crop: maize
     disease: Healthy
@@ -123,7 +123,7 @@ classes:
     crop: rice
     disease: Healthy
     healthy: true
-    aliases: [Rice___Healthy, Healthy Rice Leaf]
+    aliases: [Rice___Healthy, Healthy Rice Leaf, Rice leaf]
 
   # ---------------- Wheat ----------------
   - id: wheat__brown_rust
@@ -138,7 +138,7 @@ classes:
     crop: wheat
     disease: Healthy
     healthy: true
-    aliases: [Wheat___Healthy, Healthy Wheat]
+    aliases: [Wheat___Healthy, Healthy Wheat, Wheat leaf, Healthy_Wheat]
 
 # Severity grades by % of leaf area covered by lesions (upper bound, inclusive).
 # A common 0-4 style scale; confirm the cut-offs with your agriculture faculty.

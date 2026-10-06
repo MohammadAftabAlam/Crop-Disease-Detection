@@ -22,7 +22,6 @@ import torch
 from torch.utils.data import DataLoader
 
 from cropcare_ai.data.datasets import ManifestDataset
-from cropcare_ai.data.manifest import read_manifest, select
 from cropcare_ai.data.transforms import eval_transform
 from cropcare_ai.inference.decision import energy
 from cropcare_ai.models.bundle import load_classifier, write_json
@@ -71,6 +70,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--alpha", type=float, default=0.1, help="Allowed miss rate of the prediction set")
     parser.add_argument("--energy-pass-rate", type=float, default=0.99,
                         help="Fraction of calibration images that must pass the energy gate")
+    parser.add_argument("--tta", action="store_true", help="Average with flipped images (also used by evaluate and the API)")
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--device")
@@ -81,8 +81,9 @@ def main(argv: list[str] | None = None) -> None:
     model, bundle = load_classifier(model_dir, device)
 
     if args.manifest:
-        rows = [row for manifest in args.manifest for row in select(read_manifest(resolve_path(manifest)), args.split)]
         sources = [{"manifest": m, "split": args.split} for m in args.manifest]
+        rows = load_sources(sources)            # missing manifests are skipped with a warning
+        sources = [s for s in sources if resolve_path(s["manifest"]).exists()]
     else:
         sources = bundle.training["val_sources"]
         rows = load_sources(sources)
@@ -91,7 +92,7 @@ def main(argv: list[str] | None = None) -> None:
     if len(dataset) < 100:
         print(f"WARNING: only {len(dataset)} calibration images; thresholds will be noisy. Aim for 300+.")
     loader = DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers)
-    logits, labels = collect_logits(model, loader, device)
+    logits, labels = collect_logits(model, loader, device, tta=args.tta)
 
     temperature = fit_temperature(logits, labels)
     raw, scaled = softmax(logits), softmax(logits, temperature)
@@ -102,6 +103,7 @@ def main(argv: list[str] | None = None) -> None:
     calibration = {
         "temperature": temperature,
         "alpha": args.alpha,
+        "tta": args.tta,
         "qhat": qhat,
         "energy_threshold": energy_threshold,
         "energy_pass_rate": args.energy_pass_rate,
