@@ -1,27 +1,29 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
+import { CircleAlert, LogIn, Sprout } from "lucide-react";
+import AuthHeader from "../components/AuthHeader";
+import PasswordField, { TextField } from "../components/PasswordField";
+import { Alert, Button } from "../components/ui";
 import { loginUser } from "../services/authService";
 import useAuth from "../hooks/useAuth";
+import usePreferences from "../hooks/usePreferences";
 
 function Login() {
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const { user, login } = useAuth();
+  const { t } = usePreferences();
+  const location = useLocation();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
-  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (event) => {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
-    });
+  // Back to the page that asked for a login (see ProtectedRoute)
+  if (user) {
+    return <Navigate to={location.state?.from || "/dashboard"} replace />;
+  }
 
+  const handleChange = (event) => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
     setError("");
   };
 
@@ -33,122 +35,62 @@ function Login() {
     const password = formData.password;
 
     if (!email || !password) {
-      setError("Please enter your email and password.");
+      setError(t("auth.missingLogin"));
       return;
     }
 
     setLoading(true);
 
     try {
-      const data = await loginUser({
-        email,
-        password,
-      });
-
+      const data = await loginUser({ email, password });
       login(data.user, data.token);
-
-      navigate("/dashboard");
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Login failed. Please check your email and password."
-      );
-    } finally {
+      setError(err.response?.data?.message || t("auth.loginFailed"));
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+    <>
+      <AuthHeader icon={Sprout} title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")} />
 
-        <div className="auth-header">
-          <div className="auth-icon">🌱</div>
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        <TextField
+          id="email"
+          type="email"
+          label={t("auth.email")}
+          placeholder={t("auth.emailPlaceholder")}
+          value={formData.email}
+          onChange={handleChange}
+          autoComplete="email"
+          required
+        />
 
-          <h1>Welcome Back</h1>
-
-          <p>Login to your CropCare AI account</p>
-        </div>
-
-        {error && <div className="auth-error">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-
-          {/* Email */}
-          <div className="form-group">
-            <label htmlFor="email">
-              Email Address
-            </label>
-
-            <input
-              id="email"
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              autoComplete="email"
-            />
-          </div>
-
-          {/* Password */}
-          <div className="form-group">
-            <label htmlFor="password">
-              Password
-            </label>
-
-            <div className="password-input-wrapper">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                autoComplete="current-password"
-              />
-
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() =>
-                  setShowPassword(!showPassword)
-                }
-              >
-                {showPassword ? "🙈 Hide" : "👁️ Show"}
-              </button>
-            </div>
-          </div>
-
-          {/* Forgot Password */}
-          <div className="forgot-password-link">
-            <Link to="/forgot-password">
-              Forgot Password?
+        <PasswordField
+          id="password"
+          label={t("auth.password")}
+          value={formData.password}
+          onChange={handleChange}
+          autoComplete="current-password"
+          action={
+            <Link to="/forgot-password" className="text-sm font-semibold text-primary hover:underline">
+              {t("auth.forgotLink")}
             </Link>
-          </div>
+          }
+        />
 
-          {/* Login Button */}
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
+        {error && <Alert tone="danger" icon={CircleAlert}>{error}</Alert>}
 
-        </form>
+        <Button type="submit" size="lg" icon={LogIn} loading={loading} className="w-full">
+          {t("nav.login")}
+        </Button>
+      </form>
 
-        <p className="auth-footer">
-          Don't have an account?{" "}
-          <Link to="/register">
-            Create an account
-          </Link>
-        </p>
-
-      </div>
-    </div>
+      <p className="mt-8 text-center text-sm text-muted">
+        {t("auth.noAccount")}{" "}
+        <Link to="/register" className="font-semibold text-primary hover:underline">{t("nav.register")}</Link>
+      </p>
+    </>
   );
 }
 

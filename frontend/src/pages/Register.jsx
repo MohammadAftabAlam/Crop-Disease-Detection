@@ -1,167 +1,122 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { CircleAlert, UserPlus } from "lucide-react";
+import AuthHeader from "../components/AuthHeader";
+import PasswordField, { PasswordRules, TextField } from "../components/PasswordField";
+import { Alert, Button } from "../components/ui";
 import { registerUser } from "../services/authService";
 import useAuth from "../hooks/useAuth";
+import usePreferences from "../hooks/usePreferences";
+import { STRONG_PASSWORD } from "../utils/password";
 
 function Register() {
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const { user, login } = useAuth();
+  const { t } = usePreferences();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const handleChange = (event) => {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
-    });
+    setFormData({ ...formData, [event.target.name]: event.target.value });
+    setError("");
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
 
-    const password = formData.password;
+    const name = formData.name.trim();
+    const email = formData.email.trim();
+    const { password, confirmPassword } = formData;
 
-    // Password validation
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
-    if (!passwordRegex.test(password)) {
-      setError(
-        "Password must be at least 8 characters and include at least one uppercase letter, one lowercase letter, one number, and one special character."
-      );
+    if (!name || !email) {
+      setError(t("auth.missingRegister"));
       return;
     }
 
-    // Confirm password validation
-    if (password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
+    if (!STRONG_PASSWORD.test(password)) {
+      setError(t("profile.weak"));
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError(t("profile.mismatch"));
       return;
     }
 
     setLoading(true);
 
     try {
-      const data = await registerUser({
-        name: formData.name,
-        email: formData.email,
-        password: password,
-      });
-
+      const data = await registerUser({ name, email, password });
       login(data.user, data.token);
-
-      navigate("/dashboard");
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Registration failed. Please try again."
-      );
-    } finally {
+      setError(err.response?.data?.message || t("auth.registerFailed"));
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="auth-icon">🌱</div>
+    <>
+      <AuthHeader icon={UserPlus} title={t("auth.registerTitle")} subtitle={t("auth.registerSubtitle")} />
 
-          <h1>Create Account</h1>
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        <TextField
+          id="name"
+          label={t("auth.name")}
+          placeholder={t("auth.namePlaceholder")}
+          value={formData.name}
+          onChange={handleChange}
+          autoComplete="name"
+          maxLength={100}
+          required
+        />
 
-          <p>Join CropCare AI today</p>
-        </div>
+        <TextField
+          id="email"
+          type="email"
+          label={t("auth.email")}
+          placeholder={t("auth.emailPlaceholder")}
+          value={formData.email}
+          onChange={handleChange}
+          autoComplete="email"
+          required
+        />
 
-        {error && <div className="auth-error">{error}</div>}
+        <PasswordField
+          id="password"
+          label={t("auth.password")}
+          value={formData.password}
+          onChange={handleChange}
+          autoComplete="new-password"
+        />
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="name">Full Name</label>
+        <PasswordField
+          id="confirmPassword"
+          label={t("auth.confirm")}
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          autoComplete="new-password"
+        />
 
-            <input
-              id="name"
-              type="text"
-              name="name"
-              placeholder="Enter your name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
+        <PasswordRules value={formData.password} />
 
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
+        {error && <Alert tone="danger" icon={CircleAlert}>{error}</Alert>}
 
-            <input
-              id="email"
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+        <Button type="submit" size="lg" icon={UserPlus} loading={loading} className="w-full">
+          {t("nav.register")}
+        </Button>
+      </form>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-
-            <input
-              id="password"
-              type="password"
-              name="password"
-              placeholder="Create a strong password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              minLength="8"
-            />
-
-            <small className="password-hint">
-              Must contain 8+ characters, uppercase, lowercase, number
-              and special character.
-            </small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">
-              Confirm Password
-            </label>
-
-            <input
-              id="confirmPassword"
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm your password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={loading}
-          >
-            {loading ? "Creating Account..." : "Create Account"}
-          </button>
-        </form>
-
-        <p className="auth-footer">
-          Already have an account?{" "}
-          <Link to="/login">Login here</Link>
-        </p>
-      </div>
-    </div>
+      <p className="mt-8 text-center text-sm text-muted">
+        {t("auth.haveAccount")}{" "}
+        <Link to="/login" className="font-semibold text-primary hover:underline">{t("nav.login")}</Link>
+      </p>
+    </>
   );
 }
 

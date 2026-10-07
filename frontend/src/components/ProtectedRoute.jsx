@@ -1,14 +1,17 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
-function ProtectedRoute({ children }) {
-  const isLoggedIn = localStorage.getItem("token");
+// Wraps the pages that need a login; used as a layout route
+function ProtectedRoute() {
+  const { user } = useAuth();
+  const location = useLocation();
 
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  return children;
+  return <Outlet />;
 }
 
 export default ProtectedRoute;

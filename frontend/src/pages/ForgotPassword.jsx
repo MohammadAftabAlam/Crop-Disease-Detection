@@ -1,8 +1,15 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowLeft, CircleAlert, MailCheck, Send, KeyRound } from "lucide-react";
+import AuthHeader from "../components/AuthHeader";
+import { TextField } from "../components/PasswordField";
+import { Alert, Button } from "../components/ui";
 import api from "../services/api";
+import usePreferences from "../hooks/usePreferences";
 
 function ForgotPassword() {
+  const { t } = usePreferences();
+
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -10,106 +17,60 @@ function ForgotPassword() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     setMessage("");
     setError("");
 
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail) {
-      setError("Please enter your email address.");
+      setError(t("auth.missingEmail"));
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/forgot-password", {
-        email: trimmedEmail,
-      });
-
-      setMessage(
-        response.data.message ||
-          "If an account exists with this email, a password reset link has been sent."
-      );
-
+      const response = await api.post("/auth/forgot-password", { email: trimmedEmail });
+      setMessage(response.data.message || t("auth.resetSent"));
       setEmail("");
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Unable to process your request. Please try again."
-      );
+      setError(err.response?.data?.message || t("auth.requestFailed"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+    <>
+      <AuthHeader icon={KeyRound} title={t("auth.forgotTitle")} subtitle={t("auth.forgotSubtitle")} />
 
-        <div className="auth-header">
-          <div className="auth-icon">🔐</div>
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        <TextField
+          id="email"
+          type="email"
+          label={t("auth.email")}
+          placeholder={t("auth.emailPlaceholder")}
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setError("");
+          }}
+          autoComplete="email"
+          required
+        />
 
-          <h1>Forgot Password?</h1>
+        {error && <Alert tone="danger" icon={CircleAlert}>{error}</Alert>}
+        {message && <Alert tone="success" icon={MailCheck}>{message}</Alert>}
 
-          <p>
-            Enter your registered email address and we will
-            send you a password reset link.
-          </p>
-        </div>
+        <Button type="submit" size="lg" icon={Send} loading={loading} className="w-full">
+          {t("auth.sendLink")}
+        </Button>
+      </form>
 
-        {message && (
-          <div className="auth-success">
-            {message}
-          </div>
-        )}
-
-        {error && (
-          <div className="auth-error">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="forgot-email">
-              Email Address
-            </label>
-
-            <input
-              id="forgot-email"
-              type="email"
-              placeholder="Enter your registered email"
-              value={email}
-              onChange={(event) => {
-                setEmail(event.target.value);
-                setError("");
-                setMessage("");
-              }}
-              required
-              autoComplete="email"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "Send Reset Link"}
-          </button>
-        </form>
-
-        <p className="auth-footer">
-          Remember your password?{" "}
-          <Link to="/login">
-            Back to Login
-          </Link>
-        </p>
-
-      </div>
-    </div>
+      <Link to="/login" className="mt-8 flex items-center justify-center gap-2 text-sm font-semibold text-muted hover:text-fg">
+        <ArrowLeft className="size-4" /> {t("auth.backToLogin")}
+      </Link>
+    </>
   );
 }
 

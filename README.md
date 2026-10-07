@@ -4,7 +4,7 @@ Upload a photo of a crop leaf, get the likely disease, the model's confidence, a
 
 ```
 frontend/    React 19 + Vite                    http://localhost:5173
-backend/     Java 21, Spring Boot 4, MySQL      http://localhost:5000/api
+backend/     Java 17, Spring Boot 4, MySQL      http://localhost:5000/api
 ai-service/  Python, PyTorch, FastAPI           http://127.0.0.1:8000
 ```
 
@@ -45,7 +45,7 @@ It needs a trained model in `ai-service/artifacts/`. Train it with
 
 ### 3. Backend
 
-Requires JDK 21 (`JAVA_HOME` must point to it).
+Requires JDK 17 or newer (`JAVA_HOME` must point to it).
 
 ```bash
 cd backend
