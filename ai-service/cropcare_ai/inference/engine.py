@@ -67,7 +67,9 @@ class Predictor:
             self.severity = SeverityEstimator(model, bundle, self.taxonomy, self.device)
 
         if self.settings.gate == "bioclip":
-            self.bioclip = build_bioclip_gate(self.crop_names, self.device, self.settings.bioclip_threshold)
+            # A threshold learnt during calibration (calibrate --bioclip) beats the generic default
+            threshold = self.calibration.get("bioclip_threshold", self.settings.bioclip_threshold)
+            self.bioclip = build_bioclip_gate(self.crop_names, self.device, threshold)
 
     @property
     def loaded(self) -> bool:

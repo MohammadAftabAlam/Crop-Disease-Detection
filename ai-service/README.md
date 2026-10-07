@@ -33,7 +33,9 @@ tests/                end-to-end tests on a tiny synthetic dataset (CPU, ~15 s)
 1. **Gate.** Each photo must look like something the model knows:
    - energy score of the logits must be below a threshold learnt during calibration;
    - optionally (`CROPCARE_GATE=bioclip`) BioCLIP must agree it is a leaf of a supported crop.
-     In testing, real PlantDoc leaves scored 0.44–0.98 and non-plant images < 0.01.
+     **Not enabled by default:** on 684 real field leaves, 10% scored below 0.02, overlapping the
+     0.001–0.003 of junk images, so any useful cut-off rejected ~8% of genuine farmer photos.
+     The energy gate alone passed 99% of real leaves and rejected 6 of 7 synthetic junk images.
 2. **Several photos** of one plant: their calibrated probabilities are averaged.
 3. **Temperature scaling** makes the probabilities honest (fit on held-out photos).
 4. **Conformal prediction (LAC)** gives the set of diseases that contains the true one ~90% of the
@@ -99,7 +101,7 @@ Settings (environment variables or `ai-service/.env`):
 | `CROPCARE_CLASSIFIER_DIR` | `artifacts/classifier` |
 | `CROPCARE_SEVERITY_DIR` | `artifacts/severity` (optional; no severity if missing) |
 | `CROPCARE_GATE` | `energy`; `bioclip` adds the BioCLIP check (`pip install open_clip_torch`, ~600 MB download); `off` disables |
-| `CROPCARE_BIOCLIP_THRESHOLD` | `0.3` |
+| `CROPCARE_BIOCLIP_THRESHOLD` | `0.05`; overridden by the threshold learnt with `calibrate --bioclip` |
 | `CROPCARE_DEVICE` | `cpu` |
 | `CROPCARE_PORT` | `8000` |
 

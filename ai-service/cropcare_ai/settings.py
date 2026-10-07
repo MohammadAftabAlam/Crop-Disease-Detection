@@ -23,9 +23,10 @@ class Settings(BaseSettings):
     # "energy" uses the classifier's own logits; "bioclip" adds a zero-shot plant check
     # (needs open_clip_torch and a ~600 MB download); "off" disables the gate.
     gate: str = "energy"
-    # BioCLIP: minimum probability that the photo shows a leaf of a supported crop.
-    # Real field leaves scored 0.44-0.98 in testing; non-plant photos scored below 0.01.
-    bioclip_threshold: float = 0.3
+    # BioCLIP: minimum probability that the photo shows a leaf of a supported crop. Only used
+    # when calibration.json has no learnt "bioclip_threshold" (calibrate --bioclip).
+    # Non-plant photos scored below 0.01 in testing; real field rice leaves can score ~0.1-0.3.
+    bioclip_threshold: float = 0.05
 
     max_images: int = 5
     max_image_mb: int = 10
