@@ -1,0 +1,26 @@
+# Experiment B, backbone comparison: same data as b_mixed_convnext_tiny.yaml
+# Rice / wheat / maize manifests are optional: delete the lines you have not prepared.
+model: resnet50.a1_in1k
+image_size: 224
+epochs: 15
+freeze_epochs: 1
+batch_size: 48
+lr: 5.0e-4
+backbone_lr_mult: 0.1
+balanced_sampling: true
+train:
+  - { manifest: data/manifests/plantvillage.csv, split: train }
+  - { manifest: data/manifests/plantdoc.csv, split: train }
+  - { manifest: data/manifests/rice.csv, split: train }
+  - { manifest: data/manifests/wheat.csv, split: train }
+  - { manifest: data/manifests/maize.csv, split: train }
+val:
+  - { manifest: data/manifests/plantvillage.csv, split: val }
+  - { manifest: data/manifests/rice.csv, split: val }
+  - { manifest: data/manifests/wheat.csv, split: val }
+  - { manifest: data/manifests/maize.csv, split: val }
+check_leakage_against:
+  - { manifest: data/manifests/plantvillage.csv, split: test }
+  - { manifest: data/manifests/plantdoc.csv, split: test }
+  - { manifest: data/manifests/plantdoc.csv, split: val }
+output: artifacts/resnet50

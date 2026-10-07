@@ -1,341 +1,184 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
+import {
+  CircleAlert,
+  CircleCheck,
+  KeyRound,
+  Languages,
+  LogOut,
+  Mail,
+  Moon,
+  Palette,
+  Sun,
+  UserRound,
+} from "lucide-react";
+import { Alert, Button, Card, PageHeader, SectionTitle, Segmented, fadeUp, stagger } from "../components/ui";
+import PasswordField, { PasswordRules } from "../components/PasswordField";
 import useAuth from "../hooks/useAuth";
-import { logoutUser } from "../services/authService";
+import usePreferences from "../hooks/usePreferences";
+import { getInitials } from "../utils/helpers";
 import api from "../services/api";
+import { STRONG_PASSWORD } from "../utils/password";
 
-function Profile() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+function ChangePassword() {
+  const { t } = usePreferences();
 
-  const [formData, setFormData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-
-  const [showCurrentPassword, setShowCurrentPassword] =
-    useState(false);
-
-  const [showNewPassword, setShowNewPassword] =
-    useState(false);
-
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState(false);
-
+  const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogout = () => {
-    logoutUser();
-    logout();
-    navigate("/login");
-  };
-
   const handleChange = (event) => {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
-    });
-
+    setForm({ ...form, [event.target.name]: event.target.value });
     setMessage("");
     setError("");
   };
 
-  const handleChangePassword = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    setMessage("");
-    setError("");
-
-    const {
-      currentPassword,
-      newPassword,
-      confirmPassword,
-    } = formData;
+    const { currentPassword, newPassword, confirmPassword } = form;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError("Please fill in all password fields.");
+      setError(t("profile.fillAll"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
+      setError(t("profile.mismatch"));
       return;
     }
 
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
-    if (!passwordRegex.test(newPassword)) {
-      setError(
-        "New password must be at least 8 characters and include uppercase, lowercase, number and special character."
-      );
+    if (!STRONG_PASSWORD.test(newPassword)) {
+      setError(t("profile.weak"));
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await api.post(
-        "/auth/change-password",
-        {
-          currentPassword,
-          newPassword,
-        }
-      );
-
-      setMessage(
-        response.data.message ||
-          "Password changed successfully."
-      );
-
-      setFormData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+      const response = await api.post("/auth/change-password", { currentPassword, newPassword });
+      setMessage(response.data.message || t("profile.changed"));
+      setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Unable to change password. Please try again."
-      );
+      setError(err.response?.data?.message || t("profile.changeFailed"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="profile-page">
+    <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-7 lg:col-span-2">
+      <SectionTitle icon={KeyRound}>{t("profile.passwordTitle")}</SectionTitle>
+      <p className="-mt-2 mb-6 text-sm text-muted">{t("profile.passwordText")}</p>
 
-      <div className="profile-card">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <PasswordField
+          id="currentPassword"
+          label={t("profile.current")}
+          value={form.currentPassword}
+          onChange={handleChange}
+          autoComplete="current-password"
+        />
 
-        {/* Profile Information */}
-
-        <div className="profile-avatar">
-          {user?.name
-            ? user.name.charAt(0).toUpperCase()
-            : "U"}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <PasswordField
+            id="newPassword"
+            label={t("profile.new")}
+            value={form.newPassword}
+            onChange={handleChange}
+            autoComplete="new-password"
+          />
+          <PasswordField
+            id="confirmPassword"
+            label={t("profile.confirm")}
+            value={form.confirmPassword}
+            onChange={handleChange}
+            autoComplete="new-password"
+          />
         </div>
 
-        <h1>
-          {user?.name || "User"}
-        </h1>
+        <PasswordRules value={form.newPassword} />
 
-        <p className="profile-email">
-          {user?.email || "No email available"}
-        </p>
+        {error && <Alert tone="danger" icon={CircleAlert}>{error}</Alert>}
+        {message && <Alert tone="success" icon={CircleCheck}>{message}</Alert>}
 
-        <div className="profile-details">
-
-          <div className="profile-detail">
-            <span>Name</span>
-
-            <strong>
-              {user?.name || "Not available"}
-            </strong>
-          </div>
-
-          <div className="profile-detail">
-            <span>Email</span>
-
-            <strong>
-              {user?.email || "Not available"}
-            </strong>
-          </div>
-
+        <div className="flex flex-wrap items-center gap-4">
+          <Button type="submit" icon={KeyRound} loading={loading}>{t("profile.update")}</Button>
+          <Link to="/forgot-password" className="text-sm font-semibold text-muted hover:text-primary">
+            {t("profile.forgot")}
+          </Link>
         </div>
+      </form>
+    </Card>
+  );
+}
 
-        {/* Change Password */}
+function Profile() {
+  const { user, logout } = useAuth();
+  const { t, theme, toggleTheme, lang, setLang } = usePreferences();
+  const navigate = useNavigate();
 
-        <div className="change-password-section">
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
-          <h2>🔐 Change Password</h2>
+  return (
+    <>
+      <PageHeader eyebrow={t("profile.eyebrow")} title={t("profile.title")} description={t("profile.description")} />
 
-          <p className="change-password-description">
-            Update your account password securely.
-          </p>
-
-          {message && (
-            <div className="auth-success">
-              {message}
+      <motion.div variants={stagger} initial="hidden" animate="show" className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6">
+          <Card as={motion.div} variants={fadeUp} className="p-6 text-center">
+            <div className="mx-auto grid size-20 place-items-center rounded-full bg-primary text-2xl font-extrabold text-primary-fg glow">
+              {getInitials(user?.name) || <UserRound className="size-8" />}
             </div>
-          )}
-
-          {error && (
-            <div className="auth-error">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleChangePassword}>
-
-            {/* Current Password */}
-
-            <div className="form-group">
-              <label htmlFor="currentPassword">
-                Current Password
-              </label>
-
-              <div className="password-input-wrapper">
-
-                <input
-                  id="currentPassword"
-                  type={
-                    showCurrentPassword
-                      ? "text"
-                      : "password"
-                  }
-                  name="currentPassword"
-                  placeholder="Enter current password"
-                  value={formData.currentPassword}
-                  onChange={handleChange}
-                  autoComplete="current-password"
-                />
-
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() =>
-                    setShowCurrentPassword(
-                      !showCurrentPassword
-                    )
-                  }
-                >
-                  {showCurrentPassword
-                    ? "🙈 Hide"
-                    : "👁️ Show"}
-                </button>
-
-              </div>
-            </div>
-
-            {/* New Password */}
-
-            <div className="form-group">
-              <label htmlFor="newPassword">
-                New Password
-              </label>
-
-              <div className="password-input-wrapper">
-
-                <input
-                  id="newPassword"
-                  type={
-                    showNewPassword
-                      ? "text"
-                      : "password"
-                  }
-                  name="newPassword"
-                  placeholder="Enter new password"
-                  value={formData.newPassword}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                />
-
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() =>
-                    setShowNewPassword(
-                      !showNewPassword
-                    )
-                  }
-                >
-                  {showNewPassword
-                    ? "🙈 Hide"
-                    : "👁️ Show"}
-                </button>
-
-              </div>
-            </div>
-
-            {/* Confirm Password */}
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword">
-                Confirm New Password
-              </label>
-
-              <div className="password-input-wrapper">
-
-                <input
-                  id="confirmPassword"
-                  type={
-                    showConfirmPassword
-                      ? "text"
-                      : "password"
-                  }
-                  name="confirmPassword"
-                  placeholder="Confirm new password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                />
-
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() =>
-                    setShowConfirmPassword(
-                      !showConfirmPassword
-                    )
-                  }
-                >
-                  {showConfirmPassword
-                    ? "🙈 Hide"
-                    : "👁️ Show"}
-                </button>
-
-              </div>
-            </div>
-
-            <p className="password-hint">
-              Must contain 8+ characters, uppercase,
-              lowercase, number and special character.
+            <h2 className="mt-4 text-xl font-bold text-fg">{user?.name}</h2>
+            <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-muted">
+              <Mail className="size-3.5" /> {user?.email}
             </p>
+            <Button variant="danger" icon={LogOut} onClick={handleLogout} className="mt-6 w-full">
+              {t("nav.logout")}
+            </Button>
+          </Card>
 
-            <button
-              type="submit"
-              className="change-password-button"
-              disabled={loading}
-            >
-              {loading
-                ? "Changing Password..."
-                : "🔐 Change Password"}
-            </button>
-
-          </form>
-
-          <div className="forgot-password-profile">
-            <span>Forgot your current password?</span>
-
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/forgot-password")
-              }
-            >
-              Reset Password
-            </button>
-          </div>
-
+          <Card as={motion.div} variants={fadeUp} className="space-y-5 p-6">
+            <div>
+              <p className="mb-3 flex items-center gap-2 text-sm font-bold text-fg">
+                <Palette className="size-4 text-primary" /> {t("profile.theme")}
+              </p>
+              <Segmented
+                layoutId="profile-theme"
+                value={theme}
+                onChange={(value) => value !== theme && toggleTheme()}
+                options={[
+                  { value: "dark", label: t("profile.dark"), icon: Moon },
+                  { value: "light", label: t("profile.light"), icon: Sun },
+                ]}
+              />
+            </div>
+            <div>
+              <p className="mb-3 flex items-center gap-2 text-sm font-bold text-fg">
+                <Languages className="size-4 text-primary" /> {t("profile.language")}
+              </p>
+              <Segmented
+                layoutId="profile-lang"
+                value={lang}
+                onChange={setLang}
+                options={[
+                  { value: "en", label: "English" },
+                  { value: "hi", label: "हिन्दी" },
+                ]}
+              />
+            </div>
+          </Card>
         </div>
 
-        {/* Logout */}
-
-        <button
-          type="button"
-          className="logout-button"
-          onClick={handleLogout}
-        >
-          🚪 Logout
-        </button>
-
-      </div>
-
-    </div>
+        <ChangePassword />
+      </motion.div>
+    </>
   );
 }
 

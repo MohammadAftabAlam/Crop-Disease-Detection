@@ -1,0 +1,150 @@
+# One list of classes shared by every dataset.
+#
+# Each dataset names its folders differently ("Tomato___Late_blight",
+# "Tomato leaf late blight", ...). `aliases` maps those folder names onto the
+# canonical class id. Matching ignores case, spaces and punctuation, and a
+# folder is also tried with its crop prefixed, so a rice dataset folder called
+# "Brown Spot" matches "rice brown spot" when prepared with --crop rice.
+#
+# `id` is what the backend stores and uses to look up advice, so never rename
+# an id once models have been trained with it.
+
+crops:
+  pepper: { name: Pepper }
+  potato: { name: Potato }
+  tomato: { name: Tomato }
+  maize: { name: Maize }
+  rice: { name: Rice }
+  wheat: { name: Wheat }
+
+classes:
+  # ---------------- Pepper (bell) ----------------
+  - id: pepper__bacterial_spot
+    crop: pepper
+    disease: Bacterial Spot
+    aliases: [Pepper__bell___Bacterial_spot, "Pepper,_bell___Bacterial_spot", Bell_pepper leaf spot, Pepper Bell Bacterial Spot]
+  - id: pepper__healthy
+    crop: pepper
+    disease: Healthy
+    healthy: true
+    aliases: [Pepper__bell___healthy, "Pepper,_bell___healthy", Bell_pepper leaf]
+
+  # ---------------- Potato ----------------
+  - id: potato__early_blight
+    crop: potato
+    disease: Early Blight
+    aliases: [Potato___Early_blight, Potato leaf early blight]
+  - id: potato__late_blight
+    crop: potato
+    disease: Late Blight
+    aliases: [Potato___Late_blight, Potato leaf late blight]
+  - id: potato__healthy
+    crop: potato
+    disease: Healthy
+    healthy: true
+    aliases: [Potato___healthy, Potato leaf]
+
+  # ---------------- Tomato ----------------
+  - id: tomato__bacterial_spot
+    crop: tomato
+    disease: Bacterial Spot
+    aliases: [Tomato_Bacterial_spot, Tomato___Bacterial_spot, Tomato leaf bacterial spot, Tomato bacterial leaf spot]
+  - id: tomato__early_blight
+    crop: tomato
+    disease: Early Blight
+    aliases: [Tomato_Early_blight, Tomato___Early_blight, Tomato Early blight leaf]
+  - id: tomato__late_blight
+    crop: tomato
+    disease: Late Blight
+    aliases: [Tomato_Late_blight, Tomato___Late_blight, Tomato leaf late blight]
+  - id: tomato__leaf_mold
+    crop: tomato
+    disease: Leaf Mold
+    aliases: [Tomato_Leaf_Mold, Tomato___Leaf_Mold, Tomato mold leaf]
+  - id: tomato__septoria_leaf_spot
+    crop: tomato
+    disease: Septoria Leaf Spot
+    aliases: [Tomato_Septoria_leaf_spot, Tomato___Septoria_leaf_spot, Tomato Septoria leaf spot]
+  - id: tomato__spider_mites
+    crop: tomato
+    disease: Spider Mites
+    aliases: [Tomato_Spider_mites_Two_spotted_spider_mite, Tomato___Spider_mites Two-spotted_spider_mite, Tomato two spotted spider mites leaf]
+  - id: tomato__target_spot
+    crop: tomato
+    disease: Target Spot
+    aliases: [Tomato__Target_Spot, Tomato___Target_Spot]
+  - id: tomato__yellow_leaf_curl_virus
+    crop: tomato
+    disease: Yellow Leaf Curl Virus
+    aliases: [Tomato__Tomato_YellowLeaf__Curl_Virus, Tomato___Tomato_Yellow_Leaf_Curl_Virus, Tomato leaf yellow virus]
+  - id: tomato__mosaic_virus
+    crop: tomato
+    disease: Mosaic Virus
+    aliases: [Tomato__Tomato_mosaic_virus, Tomato___Tomato_mosaic_virus, Tomato leaf mosaic virus]
+  - id: tomato__healthy
+    crop: tomato
+    disease: Healthy
+    healthy: true
+    aliases: [Tomato_healthy, Tomato___healthy, Tomato leaf]
+
+  # ---------------- Maize (corn) ----------------
+  - id: maize__gray_leaf_spot
+    crop: maize
+    disease: Gray Leaf Spot
+    aliases: [Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot, Corn Gray leaf spot, Corn Gray Leaf Spot, Gray_Leaf_Spot, Cercospora Leaf Spot]
+  - id: maize__common_rust
+    crop: maize
+    disease: Common Rust
+    aliases: [Corn_(maize)___Common_rust_, Corn rust leaf, Corn Common Rust, Corn Rust, Common_Rust, Rust]
+  - id: maize__northern_leaf_blight
+    crop: maize
+    disease: Northern Leaf Blight
+    aliases: [Corn_(maize)___Northern_Leaf_Blight, Corn leaf blight, Corn Blight, Corn Northern Leaf Blight, Blight, Northern Corn Leaf Blight]
+  - id: maize__healthy
+    crop: maize
+    disease: Healthy
+    healthy: true
+    aliases: [Corn_(maize)___healthy, Corn Healthy, Corn leaf]
+
+  # ---------------- Rice ----------------
+  - id: rice__bacterial_leaf_blight
+    crop: rice
+    disease: Bacterial Leaf Blight
+    aliases: [Bacterial Blight, Bacterialblight, BLB, Rice Bacterial Leaf Blight]
+  - id: rice__brown_spot
+    crop: rice
+    disease: Brown Spot
+    aliases: [Brownspot, Rice___Brown_Spot]
+  - id: rice__leaf_blast
+    crop: rice
+    disease: Leaf Blast
+    aliases: [Blast, Rice Blast, Rice___Leaf_Blast]
+  - id: rice__healthy
+    crop: rice
+    disease: Healthy
+    healthy: true
+    aliases: [Rice___Healthy, Healthy Rice Leaf, Rice leaf]
+
+  # ---------------- Wheat ----------------
+  - id: wheat__brown_rust
+    crop: wheat
+    disease: Brown Rust
+    aliases: [Leaf Rust, Wheat___Brown_Rust, Wheat Leaf Rust]
+  - id: wheat__yellow_rust
+    crop: wheat
+    disease: Yellow Rust
+    aliases: [Stripe Rust, Wheat___Yellow_Rust, Wheat Stripe Rust]
+  - id: wheat__healthy
+    crop: wheat
+    disease: Healthy
+    healthy: true
+    aliases: [Wheat___Healthy, Healthy Wheat, Wheat leaf, Healthy_Wheat]
+
+# Severity grades by % of leaf area covered by lesions (upper bound, inclusive).
+# A common 0-4 style scale; confirm the cut-offs with your agriculture faculty.
+severity_grades:
+  - { grade: 0, label: None, max_percent: 1 }
+  - { grade: 1, label: Low, max_percent: 10 }
+  - { grade: 2, label: Moderate, max_percent: 25 }
+  - { grade: 3, label: High, max_percent: 50 }
+  - { grade: 4, label: Severe, max_percent: 100 }

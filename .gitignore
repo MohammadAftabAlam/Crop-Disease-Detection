@@ -1,8 +1,10 @@
 # Secrets
 .env
 .env.*
+!.env.example
 **/.env
 **/.env.*
+!**/.env.example
 
 # Dependencies
 node_modules/
@@ -15,18 +17,24 @@ __pycache__/
 venv/
 .venv/
 
-# Large dataset (20k+ images)
-backend/ai-service/dataset/
+# AI service: manifests hold machine-specific image paths; models are too large for git
+# (train on Kaggle and unzip the artifacts into ai-service/artifacts/)
+ai-service/data/
+ai-service/artifacts/
+ai-service/.env
+.pytest_cache/
+*.h5
+*.keras
+*.pt
+*.onnx
 
-# Uploaded / temp images
+# Uploaded images
 backend/uploads/
-backend/ai-service/temp_uploads/
 
 # Build output
 frontend/dist/
+backend/target/
 
 # OS / editor
 .DS_Store
 Thumbs.db
-
-*.h5

@@ -1,8 +1,11 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
+import { MotionConfig } from "motion/react";
 
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import PublicShell from "./components/layout/PublicShell";
+import AuthLayout from "./components/layout/AuthLayout";
+import AppShell from "./components/layout/AppShell";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -17,92 +20,48 @@ import DiseaseInfo from "./pages/DiseaseInfo";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
-import ProtectedRoute from "./components/ProtectedRoute";
 import AuthProvider from "./context/AuthContext";
+import PreferencesProvider from "./context/PreferencesContext";
 
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Navbar />
+      <PreferencesProvider>
+        {/* Animations are skipped for people who ask their OS for reduced motion */}
+        <MotionConfig reducedMotion="user">
+          <BrowserRouter>
+            <Routes>
+              {/* Landing page and 404: top navigation + footer */}
+              <Route element={<PublicShell />}>
+                <Route path="/" element={<Home />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
 
-        <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
+              {/* Sign-in pages: split screen */}
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:token" element={<ResetPassword />} />
+              </Route>
 
-            <Route path="/login" element={<Login />} />
+              {/* The app: sidebar layout */}
+              <Route element={<AppShell />}>
+                <Route path="/diseases" element={<DiseaseInfo />} />
 
-            <Route
-              path="/forgot-password"
-              element={<ForgotPassword />}
-            />
-
-            <Route
-              path="/reset-password/:token"
-              element={<ResetPassword />}
-            />
-
-            <Route path="/register" element={<Register />} />
-
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/detect"
-              element={
-                <ProtectedRoute>
-                  <DetectDisease />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/result"
-              element={
-                <ProtectedRoute>
-                  <Result />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/history"
-              element={
-                <ProtectedRoute>
-                  <History />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/diseases"
-              element={<DiseaseInfo />}
-            />
-
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="*"
-              element={<NotFound />}
-            />
-          </Routes>
-        </main>
-
-        <Footer />
-      </BrowserRouter>
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/detect" element={<DetectDisease />} />
+                  <Route path="/result" element={<Navigate to="/detect" replace />} />
+                  <Route path="/result/:id" element={<Result />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Route>
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </MotionConfig>
+      </PreferencesProvider>
     </AuthProvider>
   );
 }
