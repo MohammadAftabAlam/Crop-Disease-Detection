@@ -19,6 +19,7 @@ import com.cropcare.ai.AiClient;
 import com.cropcare.ai.AiClient.AiPrediction;
 import com.cropcare.common.ApiException;
 import com.cropcare.disease.DiseaseService;
+import com.cropcare.translation.Localizer;
 import com.cropcare.user.User;
 import com.cropcare.user.UserRepository;
 import com.cropcare.weather.WeatherRiskService;
@@ -37,10 +38,15 @@ public class PredictionService {
     private final AdvisoryService advisoryService;
     private final WeatherRiskService weatherRiskService;
     private final DiseaseService diseaseService;
+    private final Localizer localizer;
+
+    /** A prediction plus whether its advice could be shown in the requested language. */
+    public record Response(PredictionDto prediction, Localizer.Info translation) {
+    }
 
     public PredictionService(PredictionRepository predictions, UserRepository users, AiClient aiClient,
             ImageStorage imageStorage, AdvisoryService advisoryService, WeatherRiskService weatherRiskService,
-            DiseaseService diseaseService) {
+            DiseaseService diseaseService, Localizer localizer) {
         this.predictions = predictions;
         this.users = users;
         this.aiClient = aiClient;
@@ -48,11 +54,12 @@ public class PredictionService {
         this.advisoryService = advisoryService;
         this.weatherRiskService = weatherRiskService;
         this.diseaseService = diseaseService;
+        this.localizer = localizer;
     }
 
     /** Diagnose 1-5 photos of the same plant. Latitude/longitude are optional (used for weather risk). */
-    public PredictionDto detect(Long userId, List<MultipartFile> files, Double latitude, Double longitude,
-            boolean explain) {
+    public Response detect(Long userId, List<MultipartFile> files, Double latitude, Double longitude,
+            boolean explain, String crop, String language) {
         User user = users.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "User not found. Please login again."));
         if (files.isEmpty()) {
@@ -72,7 +79,7 @@ public class PredictionService {
             for (MultipartFile file : files) {
                 images.add(imageStorage.save(file));
             }
-            result = aiClient.predict(images, explain);
+            result = aiClient.predict(images, explain, crop);
         } catch (RuntimeException e) {
             images.forEach(imageStorage::delete);
             throw e;
@@ -82,6 +89,8 @@ public class PredictionService {
         prediction.setUser(user);
         prediction.setStatus(result.status());
         prediction.setMessage(result.message());
+        prediction.setStatusReason(result.reason());
+        prediction.setSelectedCrop(result.selectedCrop());
         prediction.setClassId(result.classId());
         prediction.setCrop(result.crop());
         prediction.setDisease(result.disease());
@@ -111,7 +120,7 @@ public class PredictionService {
         }
 
         Prediction saved = predictions.save(prediction);
-        return PredictionDto.from(saved, advice(saved), result.explanation());
+        return response(saved, result.explanation(), language);
     }
 
     @Transactional(readOnly = true)
@@ -122,9 +131,9 @@ public class PredictionService {
     }
 
     @Transactional(readOnly = true)
-    public PredictionDto findOne(Long userId, Long predictionId) {
+    public Response findOne(Long userId, Long predictionId, String language) {
         Prediction prediction = owned(userId, predictionId);
-        return PredictionDto.from(prediction, advice(prediction), null);
+        return response(prediction, null, language);
     }
 
     @Transactional(readOnly = true)
@@ -137,7 +146,7 @@ public class PredictionService {
     }
 
     @Transactional
-    public PredictionDto feedback(Long userId, Long predictionId, FeedbackRequest request) {
+    public Response feedback(Long userId, Long predictionId, FeedbackRequest request, String language) {
         Prediction prediction = owned(userId, predictionId);
         String actual = request.actualClassId() == null || request.actualClassId().isBlank()
                 ? null : request.actualClassId().trim();
@@ -148,7 +157,12 @@ public class PredictionService {
         prediction.setFeedbackClassId(Boolean.TRUE.equals(request.correct()) ? prediction.getClassId() : actual);
         prediction.setFeedbackComment(request.comment());
         prediction.setFeedbackAt(Instant.now());
-        return PredictionDto.from(prediction, advice(prediction), null);
+        return response(prediction, null, language);
+    }
+
+    private Response response(Prediction p, AiClient.Explanation explanation, String language) {
+        Localizer.Localized<Advice> advice = localizer.advice(advice(p), language);
+        return new Response(PredictionDto.from(p, advice.value(), explanation), advice.info());
     }
 
     private Prediction owned(Long userId, Long predictionId) {
@@ -158,7 +172,7 @@ public class PredictionService {
 
     private Advice advice(Prediction p) {
         return advisoryService.adviceFor(new AdvisoryService.Context(
-                p.getStatus(), p.getClassId(),
+                p.getStatus(), p.getStatusReason(), p.getClassId(),
                 p.getCandidates().stream().map(PredictionCandidate::getClassId).toList(),
                 p.getSeverityGrade(), p.getWeatherRiskLevel()));
     }

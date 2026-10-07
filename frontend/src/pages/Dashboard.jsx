@@ -156,7 +156,7 @@ function StatusBreakdown({ predictions }) {
 
 // Single series: one colour, value at the bar tip
 function TopDiseases({ predictions }) {
-  const { t, cropName } = usePreferences();
+  const { t, cropName, diseaseName } = usePreferences();
 
   const rows = useMemo(() => {
     const counts = new Map();
@@ -189,7 +189,7 @@ function TopDiseases({ predictions }) {
             <li key={`${row.crop}-${row.disease}`} className="group">
               <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
                 <span className="truncate text-fg">
-                  {row.disease} <span className="text-muted">· {cropName(row.crop)}</span>
+                  {diseaseName(row.disease)} <span className="text-muted">· {cropName(row.crop)}</span>
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -212,7 +212,7 @@ function TopDiseases({ predictions }) {
 }
 
 function RecentScans({ predictions }) {
-  const { t, cropName, locale } = usePreferences();
+  const { t, cropName, locale, diseaseName } = usePreferences();
   const recent = predictions.slice(0, 5);
 
   return (
@@ -256,7 +256,7 @@ function RecentScans({ predictions }) {
                     <div className="size-12 shrink-0 rounded-lg bg-surface-2" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-fg">{predictionTitle(item, t)}</p>
+                    <p className="truncate text-sm font-semibold text-fg">{predictionTitle(item, t, diseaseName)}</p>
                     <p className="truncate text-xs text-muted">
                       {item.crop ? `${cropName(item.crop)} · ` : ""}
                       {formatDate(item.createdAt, locale)}
@@ -277,7 +277,7 @@ function RecentScans({ predictions }) {
 
 // Honest model numbers: lab photos vs real field photos
 function ModelCard() {
-  const { t, cropName, locale } = usePreferences();
+  const { t, cropName, locale, diseaseName } = usePreferences();
   const modelInfo = useModelInfo();
 
   const lab = testAccuracy(modelInfo, "plantvillage_test");
@@ -348,7 +348,7 @@ function ModelCard() {
 
 // Disease risk near the farmer for the next 3 days (Open-Meteo forecast)
 function WeatherWidget() {
-  const { t, cropName } = usePreferences();
+  const { t, cropName, diseaseName } = usePreferences();
   const modelInfo = useModelInfo();
   const { diseases } = useDiseases();
   const crops = modelInfo?.crops?.length ? modelInfo.crops : SUPPORTED_CROPS;
@@ -356,7 +356,7 @@ function WeatherWidget() {
   const [crop, setCrop] = useState(crops[0]);
   const [state, setState] = useState({ status: "idle", risks: [], error: "" });
 
-  const nameFor = (code) => diseases.find((disease) => disease.code === code)?.diseaseName || diseaseNameFromCode(code);
+  const nameFor = (code) => diseaseName(diseases.find((disease) => disease.code === code)?.diseaseName || diseaseNameFromCode(code));
 
   const check = async () => {
     setState({ status: "loading", risks: [], error: "" });

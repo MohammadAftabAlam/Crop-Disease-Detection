@@ -5,7 +5,8 @@
 GET  /health       is the service up, which models are loaded
 GET  /model-info   classes, calibration, measured metrics per test set
 POST /predict      multipart field "images" (1-5 photos of one plant) or "image" (one photo)
-                   query: explain=true adds Grad-CAM + lesion overlays, severity=false skips severity
+                   query: explain=true adds Grad-CAM + lesion overlays, severity=false skips severity,
+                   crop=rice limits the answer to the farmer's crop
 Interactive docs: http://127.0.0.1:8000/docs
 """
 
@@ -19,7 +20,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from cropcare_ai import __version__
-from cropcare_ai.inference.engine import ModelNotLoaded, Predictor
+from cropcare_ai.inference.engine import ModelNotLoaded, Predictor, UnknownCrop
 from cropcare_ai.inference.imaging import InvalidImage
 from cropcare_ai.settings import Settings, get_settings
 
@@ -69,6 +70,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         image: UploadFile | None = File(None),
         explain: bool = Query(False),
         severity: bool = Query(True),
+        crop: str | None = Query(None, description="Crop chosen by the farmer, e.g. rice; limits the answer to that crop"),
     ):
         uploads = list(images or []) + ([image] if image else [])
         if not uploads:
@@ -85,8 +87,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             data.append(content)
 
         try:
-            return request.app.state.predictor.predict(data, explain=explain, with_severity=severity)
-        except InvalidImage as error:
+            return request.app.state.predictor.predict(data, explain=explain, with_severity=severity, crop=crop)
+        except (InvalidImage, UnknownCrop) as error:
             raise ApiError(400, str(error))
         except ModelNotLoaded as error:
             raise ApiError(503, str(error))

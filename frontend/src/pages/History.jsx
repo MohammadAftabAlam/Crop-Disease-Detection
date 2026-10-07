@@ -10,7 +10,7 @@ import usePreferences from "../hooks/usePreferences";
 import { SEVERITY_TONE, STATUSES, formatDate, predictionTitle, statusInfo } from "../utils/prediction";
 
 function HistoryCard({ prediction }) {
-  const { t, cropName, locale } = usePreferences();
+  const { t, cropName, locale, diseaseName } = usePreferences();
   const status = statusInfo(prediction.status);
   const tone = prediction.isHealthy ? "success" : status.tone;
   const photos = prediction.imageUrls || [];
@@ -56,7 +56,7 @@ function HistoryCard({ prediction }) {
           {prediction.crop && diagnosed && (
             <p className="text-xs font-bold tracking-wider text-primary uppercase">{cropName(prediction.crop)}</p>
           )}
-          <h3 className="mt-1 truncate text-base font-bold text-fg">{predictionTitle(prediction, t)}</h3>
+          <h3 className="mt-1 truncate text-base font-bold text-fg">{predictionTitle(prediction, t, diseaseName)}</h3>
           <p className="mt-0.5 text-xs text-muted">{formatDate(prediction.createdAt, locale)}</p>
 
           {diagnosed && prediction.confidence != null && (
@@ -86,7 +86,7 @@ function HistoryCard({ prediction }) {
 }
 
 function History() {
-  const { t, cropName } = usePreferences();
+  const { t, cropName, diseaseName } = usePreferences();
 
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);

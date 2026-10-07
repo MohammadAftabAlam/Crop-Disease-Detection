@@ -1,6 +1,6 @@
 # Experiment C backbone comparison: same data and settings as c_convnext_tiny.yaml
 # Data roles:  train -> learning | val below -> choosing the best epoch
-#              plantdoc/rice/wheat val -> calibration only | all test splits -> final report
+#              plantdoc/plantwild val -> calibration (in the notebook) | all test splits -> final report
 # Missing manifests (e.g. no wheat dataset) are skipped with a warning.
 model: mobilenetv3_large_100.ra_in1k
 image_size: 256

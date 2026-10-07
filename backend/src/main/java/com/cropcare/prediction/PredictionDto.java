@@ -15,6 +15,8 @@ import com.cropcare.ai.AiClient.Explanation;
 public record PredictionDto(
         Long id,
         String status,
+        String reason,
+        String selectedCrop,
         String message,
         String classId,
         String crop,
@@ -55,7 +57,7 @@ public record PredictionDto(
                 : new Feedback(p.getFeedbackCorrect(), p.getFeedbackClassId(), p.getFeedbackComment(), p.getFeedbackAt());
 
         return new PredictionDto(
-                p.getId(), p.getStatus(), p.getMessage(), p.getClassId(), p.getCrop(), p.getDisease(), p.getHealthy(),
+                p.getId(), p.getStatus(), p.getStatusReason(), p.getSelectedCrop(), p.getMessage(), p.getClassId(), p.getCrop(), p.getDisease(), p.getHealthy(),
                 p.getConfidence(),
                 p.getCandidates().stream()
                         .map(c -> new Candidate(c.getClassId(), c.getCrop(), c.getDisease(), c.getConfidence()))

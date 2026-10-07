@@ -25,6 +25,11 @@ See [ai-service/README.md](ai-service/README.md). In short:
 - severity (% of leaf diseased), Grad-CAM heat maps, and 1-5 photos per diagnosis
 - the backend adds weather risk (Open-Meteo forecast) and template-based advice that only
   suggests treatment for confident diagnoses
+- Hindi: reviewed disease names in the app, advice machine-translated by Bhashini
+  (set `BHASHINI_USER_ID` / `BHASHINI_API_KEY` in `backend/.env`; English is shown without them)
+- offline mode: an installable app (PWA); after a one-time 31 MB download (Profile → Offline mode)
+  the phone diagnoses with MobileNetV3 in the browser and saves photos for full analysis later.
+  Try it with `npm run build && npm run preview` (the service worker only runs in a production build).
 
 ## Running locally
 

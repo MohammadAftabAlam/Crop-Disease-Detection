@@ -57,7 +57,7 @@ function Section({ icon: Icon, title, items }) {
 
 // Full library entry: side panel on desktop, bottom sheet on phones
 function DiseaseDrawer({ disease, onClose }) {
-  const { t, cropName } = usePreferences();
+  const { t, cropName, diseaseName } = usePreferences();
   const closeRef = useRef(null);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ function DiseaseDrawer({ disease, onClose }) {
               {type && <Badge icon={Microscope}>{t(`library.type.${type}`)}</Badge>}
             </div>
             <h2 id="disease-drawer-title" className="text-2xl font-extrabold tracking-tight text-fg">
-              {healthy ? t("library.healthyName", { crop: cropName(disease.crop) }) : disease.diseaseName}
+              {healthy ? t("library.healthyName", { crop: cropName(disease.crop) }) : diseaseName(disease.diseaseName)}
             </h2>
             {disease.pathogen && <p className="mt-1 text-sm text-muted italic">{disease.pathogen}</p>}
           </div>

@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     # Non-plant photos scored below 0.01 in testing; real field rice leaves can score ~0.1-0.3.
     bioclip_threshold: float = 0.05
 
+    # Lesion cross-check: a lesion-type diagnosis with less diseased area than this (%) becomes
+    # "unknown". 0 turns it off. Chosen from field test photos (training/evaluate_checks.py).
+    min_lesion_percent: float = 1.0
+
     max_images: int = 5
     max_image_mb: int = 10
 

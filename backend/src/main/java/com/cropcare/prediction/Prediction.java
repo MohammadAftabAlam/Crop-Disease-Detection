@@ -40,6 +40,14 @@ public class Prediction {
     @Column(length = 1000)
     private String message;
 
+    /** Why the AI gave this status, e.g. "no_lesions"; null when there is nothing to explain */
+    @Column(name = "status_reason", length = 30)
+    private String statusReason;
+
+    /** Crop the farmer chose before scanning (limits the answer to that crop); null = any crop */
+    @Column(name = "selected_crop", length = 30)
+    private String selectedCrop;
+
     /** Most likely class, e.g. "tomato__late_blight"; null when rejected. */
     @Column(name = "class_id", length = 80)
     private String classId;
@@ -137,6 +145,22 @@ public class Prediction {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getStatusReason() {
+        return statusReason;
+    }
+
+    public void setStatusReason(String statusReason) {
+        this.statusReason = statusReason;
+    }
+
+    public String getSelectedCrop() {
+        return selectedCrop;
+    }
+
+    public void setSelectedCrop(String selectedCrop) {
+        this.selectedCrop = selectedCrop;
     }
 
     public String getClassId() {

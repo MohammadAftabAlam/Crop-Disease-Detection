@@ -173,3 +173,21 @@ def test_tta_setting_flows_from_calibration_to_api(workspace):
     finally:
         (model_dir / "calibration.json").write_text(original)
         (model_dir / "metrics" / "tta_check.json").unlink(missing_ok=True)
+
+
+def test_prepare_drops_classes_that_are_too_small(tmp_path):
+    from conftest import leaf_image
+    from cropcare_ai.data import prepare
+    import json as _json
+
+    for folder, count in (("Aphid", 3), ("Healthy", 12), ("Mite", 12)):
+        target = tmp_path / "wheat" / folder
+        target.mkdir(parents=True)
+        for i in range(count):
+            leaf_image(1, seed=hash((folder, i)) % 10_000).save(target / f"{i}.jpg")
+    out = tmp_path / "wheat.csv"
+    prepare.main(["--name", "wheat", "--root", str(tmp_path / "wheat"), "--crop", "wheat",
+                  "--min-class-images", "10", "--out", str(out)])
+    summary = _json.loads(out.with_suffix(".summary.json").read_text())
+    assert summary["dropped_small_classes"] == {"wheat__aphid": 3}
+    assert set(summary["classes"]) == {"wheat__healthy", "wheat__mite"}

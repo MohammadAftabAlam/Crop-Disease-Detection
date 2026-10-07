@@ -22,6 +22,7 @@ class DiseaseClass:
     crop_name: str     # display name, e.g. "Tomato"
     disease: str       # display name, e.g. "Late Blight"
     healthy: bool
+    lesions: bool = True   # leaves spot/blight lesions (false: viruses, mites, insect damage, healthy)
 
     def as_dict(self) -> dict:
         return {
@@ -69,6 +70,7 @@ class Taxonomy:
                 crop_name=crops[crop_key]["name"],
                 disease=item["disease"],
                 healthy=bool(item.get("healthy", False)),
+                lesions=bool(item.get("lesions", not item.get("healthy", False))),
             )
             if disease_class.id in classes:
                 raise ValueError(f"Duplicate class id {disease_class.id}")

@@ -1071,5 +1071,184 @@
     ],
     "chemicalControl": [],
     "sources": []
+  },
+  {
+    "code": "maize__insect_damage",
+    "crop": "Maize",
+    "diseaseName": "Insect Feeding Damage",
+    "pathogen": "Pest (mainly fall armyworm, Spodoptera frugiperda; also other caterpillars and beetles)",
+    "description": "Holes, torn edges and papery patches on maize leaves caused by insects feeding. Fall armyworm, present in India since 2018, is the most damaging maize pest.",
+    "symptoms": [
+      "Ragged holes and torn leaf edges",
+      "Papery 'window-pane' patches on young leaves",
+      "Sawdust-like droppings in the leaf whorl",
+      "Caterpillars inside the whorl"
+    ],
+    "causes": [
+      "Fall armyworm caterpillars feeding in the whorl",
+      "Other caterpillars, beetles or grasshoppers"
+    ],
+    "favourableConditions": "Warm weather; young maize at the whorl stage is damaged most",
+    "remedies": [
+      "Check the whorl of damaged plants for caterpillars and droppings",
+      "Hand-pick and destroy egg masses and caterpillars",
+      "Act early: young caterpillars are much easier to control"
+    ],
+    "organicControl": [
+      "Install pheromone traps to monitor the moths",
+      "Spray a neem oil (azadirachtin) formulation, following the label into the whorl",
+      "Protect natural enemies by avoiding unnecessary broad-spectrum sprays"
+    ],
+    "prevention": [
+      "Sow on time and at the same time as neighbouring fields",
+      "Inspect the young crop twice a week",
+      "Remove weeds and crop residue that shelter the pest"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "rice__hispa",
+    "crop": "Rice",
+    "diseaseName": "Hispa",
+    "pathogen": "Pest (rice hispa beetle, Dicladispa armigera)",
+    "description": "Adult beetles scrape the green tissue from the upper leaf surface and the grubs tunnel inside the leaf, leaving white streaks and dried patches.",
+    "symptoms": [
+      "White parallel streaks where the leaf surface is scraped",
+      "Irregular whitish blotches from grubs tunnelling inside the leaf",
+      "Small dark spiny beetles on the leaves",
+      "Badly attacked fields look whitish and dry"
+    ],
+    "causes": [
+      "Rice hispa beetles and their grubs"
+    ],
+    "favourableConditions": "Warm, humid weather and excess nitrogen, mostly in the vegetative stage",
+    "remedies": [
+      "Clip and destroy the tips of affected leaves to remove the grubs",
+      "Avoid excess nitrogen fertiliser"
+    ],
+    "organicControl": [
+      "Spray a neem oil (azadirachtin) formulation, following the label"
+    ],
+    "prevention": [
+      "Remove grassy weeds around the field and bunds",
+      "Clip leaf tips of seedlings before transplanting",
+      "Check the nursery and young crop every week"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "wheat__aphid",
+    "crop": "Wheat",
+    "diseaseName": "Aphids",
+    "pathogen": "Pest (wheat aphids, such as Sitobion avenae and Rhopalosiphum species)",
+    "description": "Small soft-bodied insects that suck sap from wheat leaves and ears, mostly late in the season; heavy colonies weaken plants and reduce grain filling.",
+    "symptoms": [
+      "Colonies of small green, black or brown insects on leaves and ears",
+      "Sticky honeydew on leaves, sometimes with black sooty mould",
+      "Yellowing and curling of leaves"
+    ],
+    "causes": [
+      "Wheat aphids feeding on plant sap"
+    ],
+    "favourableConditions": "Cool, cloudy and humid weather late in the season; dense crops with excess nitrogen",
+    "remedies": [
+      "Check several plants across the field for aphid colonies on leaves and ears",
+      "Protect ladybird beetles and other natural enemies, which control aphids"
+    ],
+    "organicControl": [
+      "Spray a neem oil (azadirachtin) formulation, following the label",
+      "Use yellow sticky traps to monitor winged aphids"
+    ],
+    "prevention": [
+      "Sow on time; late-sown wheat is attacked more",
+      "Avoid excess nitrogen fertiliser",
+      "Monitor the crop weekly from January"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
+  },
+  {
+    "code": "wheat__mite",
+    "crop": "Wheat",
+    "diseaseName": "Mites",
+    "pathogen": "Pest (mites such as the wheat brown mite, Petrobia latens)",
+    "description": "Tiny mites that feed on leaf cells, giving leaves a speckled, bronzed or dried look; damage is worst in dry spells.",
+    "symptoms": [
+      "Fine yellow-white speckling on leaves",
+      "Leaves turn bronze or yellow and dry from the tips",
+      "Tiny reddish-brown mites, best seen with a hand lens"
+    ],
+    "causes": [
+      "Mites feeding on leaf cells"
+    ],
+    "favourableConditions": "Dry, warm spells and moisture stress",
+    "remedies": [
+      "Check the lower leaves with a hand lens for mites",
+      "Irrigate on time: moisture stress makes mite damage worse"
+    ],
+    "organicControl": [
+      "Spray a neem oil (azadirachtin) formulation, following the label"
+    ],
+    "prevention": [
+      "Avoid moisture stress",
+      "Remove weeds and volunteer plants that host mites",
+      "Rotate wheat with other crops"
+    ],
+    "chemicalControl": [],
+    "sources": [
+      {
+        "title": "CIB&RC - pesticides registered in India (Directorate of Plant Protection, Quarantine & Storage)",
+        "url": "https://ppqs.gov.in"
+      },
+      {
+        "title": "TNAU Agritech Portal - crop protection",
+        "url": "https://agritech.tnau.ac.in"
+      },
+      {
+        "title": "Find your Krishi Vigyan Kendra (ICAR)",
+        "url": "https://kvk.icar.gov.in"
+      }
+    ]
   }
 ]

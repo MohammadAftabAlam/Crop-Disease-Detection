@@ -22,17 +22,38 @@ export const statusInfo = (status) =>
 export const isDiseased = (prediction) =>
   ["confident", "ambiguous"].includes(prediction.status) && !prediction.isHealthy;
 
-// Short title for a prediction card; t is the translate function
-export const predictionTitle = (prediction, t) => {
+// Short title for a prediction card; t is the translate function, diseaseName translates the name
+export const predictionTitle = (prediction, t, diseaseName = (name) => name) => {
   if (prediction.status === "rejected") {
     return t("result.rejectedTitle");
   }
 
   if (prediction.status === "unknown") {
-    return t("result.unknownTitle");
+    return t(prediction.reason === "no_lesions" ? "result.noLesionsTitle" : "result.unknownTitle");
   }
 
-  return prediction.isHealthy ? t("result.healthyTitle") : prediction.disease;
+  return prediction.isHealthy ? t("result.healthyTitle") : diseaseName(prediction.disease);
+};
+
+// The prediction's one-line message, in the user's language
+export const predictionMessage = (prediction, { t, cropName, diseaseName }, supportedCrops = []) => {
+  const crop = cropName(prediction.crop);
+  const disease = diseaseName(prediction.disease);
+
+  switch (prediction.status) {
+    case "confident":
+      return prediction.isHealthy ? t("result.msgHealthy", { crop }) : t("result.msgConfident", { crop, disease });
+    case "ambiguous": {
+      const options = (prediction.candidates || [])
+        .map((c) => `${cropName(c.crop)} ${diseaseName(c.disease)}`)
+        .join(` ${t("result.or")} `);
+      return t("result.msgAmbiguous", { options: options || `${crop} ${disease}` });
+    }
+    case "rejected":
+      return t("result.msgRejected", { crops: supportedCrops.map(cropName).join(", ") });
+    default:
+      return t(prediction.reason === "no_lesions" ? "result.msgNoLesions" : "result.msgUnknown");
+  }
 };
 
 export const URGENCY_TONE = {

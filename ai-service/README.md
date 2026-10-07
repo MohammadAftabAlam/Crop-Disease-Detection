@@ -79,7 +79,12 @@ python -m cropcare_ai.training.evaluate --manifest data/manifests/plantdoc.csv -
 python -m cropcare_ai.training.evaluate --manifest data/manifests/field.csv --name field_test --description "Our field photos"
 python -m cropcare_ai.training.report --model-dir artifacts/exp_a_pv_only_mobilenetv3 artifacts/classifier
 
-# 4. Severity model (PlantSeg COCO annotations) and offline export
+# 4. Phone model for offline mode (writes frontend/public/model/; checks accuracy on field photos)
+python -m cropcare_ai.training.export_onnx --model-dir artifacts/c_mobilenetv3
+python -m cropcare_ai.training.export_web --model-dir artifacts/c_mobilenetv3 --check data/manifests/plantdoc.csv --check data/manifests/plantwild.csv
+#    float32 is shipped: int8 lost too much field accuracy (dynamic 22%, static 51% vs 62.5%)
+
+# 5. Severity model (PlantSeg COCO annotations) and offline export
 python -m cropcare_ai.training.train_segmenter --train-coco ... --train-images ... --val-coco ... --val-images ...
 python -m cropcare_ai.training.export_onnx
 ```

@@ -10,8 +10,16 @@ public record AppProperties(
         Jwt jwt,
         String frontendUrl,
         String aiServiceUrl,
-        String uploadDir) {
+        String uploadDir,
+        Bhashini bhashini) {
 
     public record Jwt(String secret, Duration expiry) {
+    }
+
+    /** Bhashini (Government of India) translation API. Empty userId/apiKey = translation off. */
+    public record Bhashini(String userId, String apiKey, String pipelineId, String configUrl) {
+        public boolean configured() {
+            return userId != null && !userId.isBlank() && apiKey != null && !apiKey.isBlank();
+        }
     }
 }

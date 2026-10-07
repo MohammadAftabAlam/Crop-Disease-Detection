@@ -9,7 +9,7 @@ import { Backdrop, LanguageToggle, Logo, ThemeToggle } from "./Controls";
 
 // Brand panel: the sample photo fading into the model's real heat map
 function Showcase() {
-  const { t, cropName } = usePreferences();
+  const { t, cropName, diseaseName } = usePreferences();
   const reduceMotion = useReducedMotion();
   const [showHeat, setShowHeat] = useState(true);
 
@@ -52,7 +52,7 @@ function Showcase() {
 
         <div className="flex items-center justify-between gap-3 px-2 pt-4 pb-1">
           <div className="min-w-0">
-            <p className="truncate font-bold text-fg">{cropName(top.crop)} – {top.disease}</p>
+            <p className="truncate font-bold text-fg">{cropName(top.crop)} – {diseaseName(top.disease)}</p>
             <p className="text-xs text-muted">{t("landing.demoCaption")}</p>
           </div>
           <Badge tone="warning" icon={CircleHelp}>{t("status.ambiguous.short")}</Badge>

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -48,13 +49,13 @@ class PredictionIntegrationTest extends IntegrationTestBase {
 
     @Test
     void diseaseLibraryHasAllModelClassesAndSafeSearch() throws Exception {
-        mvc.perform(get("/api/diseases")).andExpect(jsonPath("$.diseases", hasSize(26)));
+        mvc.perform(get("/api/diseases")).andExpect(jsonPath("$.diseases", hasSize(30)));
         // Potato/Tomato early+late, maize northern leaf blight, rice bacterial leaf blight
         mvc.perform(get("/api/diseases/search").param("q", "blight")).andExpect(jsonPath("$.diseases", hasSize(6)));
         mvc.perform(get("/api/diseases/search").param("q", "(")).andExpect(jsonPath("$.diseases", hasSize(0)));
         mvc.perform(get("/api/diseases/crop/tomato")).andExpect(jsonPath("$.diseases", hasSize(10)));
         mvc.perform(get("/api/diseases/crop/wheat"))
-                .andExpect(jsonPath("$.diseases", hasSize(3)))
+                .andExpect(jsonPath("$.diseases", hasSize(5)))
                 .andExpect(jsonPath("$.diseases[0].code").isString());
         mvc.perform(get("/api/diseases/abc")).andExpect(status().isNotFound());
     }
@@ -62,7 +63,7 @@ class PredictionIntegrationTest extends IntegrationTestBase {
     @Test
     void confidentDiagnosisGetsSeverityWeatherAndAdvice() throws Exception {
         String token = register(uniqueEmail());
-        given(aiClient.predict(anyList(), anyBoolean()))
+        given(aiClient.predict(anyList(), anyBoolean(), any()))
                 .willReturn(confident("tomato__late_blight", "Tomato", "Late Blight", false, 1));
         // 30 cool, humid hours -> HIGH late blight risk
         given(weatherClient.next72Hours(anyDouble(), anyDouble())).willReturn(hours(30, 15, 95));
@@ -94,7 +95,7 @@ class PredictionIntegrationTest extends IntegrationTestBase {
     @Test
     void virusIsAlwaysUrgentAndHasNoChemicalCure() throws Exception {
         String token = register(uniqueEmail());
-        given(aiClient.predict(anyList(), anyBoolean())).willReturn(
+        given(aiClient.predict(anyList(), anyBoolean(), any())).willReturn(
                 confident("tomato__yellow_leaf_curl_virus", "Tomato", "Yellow Leaf Curl Virus", false, null));
 
         mvc.perform(detect(token).file(photo("image")))
@@ -106,7 +107,7 @@ class PredictionIntegrationTest extends IntegrationTestBase {
     @Test
     void healthyLeafGetsNoTreatment() throws Exception {
         String token = register(uniqueEmail());
-        given(aiClient.predict(anyList(), anyBoolean()))
+        given(aiClient.predict(anyList(), anyBoolean(), any()))
                 .willReturn(confident("wheat__healthy", "Wheat", "Healthy", true, null));
 
         mvc.perform(detect(token).file(photo("image")))
@@ -118,14 +119,14 @@ class PredictionIntegrationTest extends IntegrationTestBase {
     void ambiguousAndRejectedResultsNeverRecommendSpraying() throws Exception {
         String token = register(uniqueEmail());
 
-        given(aiClient.predict(anyList(), anyBoolean())).willReturn(ambiguous());
+        given(aiClient.predict(anyList(), anyBoolean(), any())).willReturn(ambiguous());
         mvc.perform(detect(token).file(photo("image")))
                 .andExpect(jsonPath("$.prediction.status").value("ambiguous"))
                 .andExpect(jsonPath("$.prediction.candidates", hasSize(2)))
                 .andExpect(jsonPath("$.prediction.advice.headline").value("Possibly Tomato Early Blight or Tomato Late Blight"))
                 .andExpect(jsonPath("$.prediction.advice.chemicalNote").value("Do not spray until the disease is confirmed."));
 
-        given(aiClient.predict(anyList(), anyBoolean())).willReturn(rejected());
+        given(aiClient.predict(anyList(), anyBoolean(), any())).willReturn(rejected());
         mvc.perform(detect(token).file(photo("image")).param("lat", "28.4").param("lon", "77.5"))
                 .andExpect(jsonPath("$.prediction.status").value("rejected"))
                 .andExpect(jsonPath("$.prediction.classId").doesNotExist())
@@ -137,7 +138,7 @@ class PredictionIntegrationTest extends IntegrationTestBase {
     @Test
     void multiplePhotosAreSentTogetherAndCanBeViewedLater() throws Exception {
         String token = register(uniqueEmail());
-        given(aiClient.predict(anyList(), anyBoolean()))
+        given(aiClient.predict(anyList(), anyBoolean(), any()))
                 .willReturn(confident("potato__early_blight", "Potato", "Early Blight", false, 2));
 
         String body = mvc.perform(detect(token).file(photo("images")).file(photo("images")).file(photo("images")))
@@ -146,7 +147,7 @@ class PredictionIntegrationTest extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
         ArgumentCaptor<List<Path>> sent = ArgumentCaptor.forClass(List.class);
-        verify(aiClient).predict(sent.capture(), anyBoolean());
+        verify(aiClient).predict(sent.capture(), anyBoolean(), any());
         assertThat(sent.getValue()).hasSize(3);
 
         String imageUrl = JsonPath.read(body, "$.prediction.imageUrls[2]");
@@ -182,7 +183,7 @@ class PredictionIntegrationTest extends IntegrationTestBase {
         mvc.perform(detect(token).file(photo("image")).param("lat", "123").param("lon", "77"))
                 .andExpect(status().isBadRequest());
 
-        given(aiClient.predict(anyList(), anyBoolean()))
+        given(aiClient.predict(anyList(), anyBoolean(), any()))
                 .willThrow(new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "AI down"));
         mvc.perform(detect(token).file(photo("image")))
                 .andExpect(status().isServiceUnavailable())
@@ -192,7 +193,7 @@ class PredictionIntegrationTest extends IntegrationTestBase {
     @Test
     void weatherFailureDoesNotBreakDiagnosis() throws Exception {
         String token = register(uniqueEmail());
-        given(aiClient.predict(anyList(), anyBoolean()))
+        given(aiClient.predict(anyList(), anyBoolean(), any()))
                 .willReturn(confident("rice__leaf_blast", "Rice", "Leaf Blast", false, 3));
         given(weatherClient.next72Hours(anyDouble(), anyDouble()))
                 .willThrow(new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "Weather down"));
@@ -206,7 +207,7 @@ class PredictionIntegrationTest extends IntegrationTestBase {
     @Test
     void feedbackIsStoredAndValidated() throws Exception {
         String token = register(uniqueEmail());
-        given(aiClient.predict(anyList(), anyBoolean()))
+        given(aiClient.predict(anyList(), anyBoolean(), any()))
                 .willReturn(confident("tomato__late_blight", "Tomato", "Late Blight", false, 1));
         String body = mvc.perform(detect(token).file(photo("image"))).andReturn().getResponse().getContentAsString();
         Integer id = JsonPath.read(body, "$.prediction.id");
@@ -247,5 +248,22 @@ class PredictionIntegrationTest extends IntegrationTestBase {
         mvc.perform(get("/api/weather/risk").param("crop", "banana").param("lat", "28.4").param("lon", "77.5")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void cropChoiceIsSentToTheAiAndNoLesionResultsGetPestAdvice() throws Exception {
+        String token = register(uniqueEmail());
+        given(aiClient.predict(anyList(), anyBoolean(), any())).willReturn(noLesions());
+
+        mvc.perform(detect(token).file(photo("image")).param("crop", "maize"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.prediction.status").value("unknown"))
+                .andExpect(jsonPath("$.prediction.reason").value("no_lesions"))
+                .andExpect(jsonPath("$.prediction.selectedCrop").value("maize"))
+                .andExpect(jsonPath("$.prediction.advice.headline").value("No disease spots found"))
+                .andExpect(jsonPath("$.prediction.advice.chemicalNote").value(startsWith("Do not spray a fungicide")))
+                .andExpect(jsonPath("$.prediction.advice.immediateActions[0]").value(containsString("caterpillars")));
+
+        verify(aiClient).predict(anyList(), anyBoolean(), org.mockito.ArgumentMatchers.eq("maize"));
     }
 }

@@ -57,7 +57,7 @@ abstract class IntegrationTestBase {
         Severity severity = severityGrade == null ? null : new Severity(8.5, severityGrade, "Low", true);
         return new AiPrediction(true, "confident", crop + ": " + disease + ".", classId, crop, disease, healthy, 96.4,
                 List.of(new Candidate(classId, crop, disease, healthy, 96.4)), severity,
-                new Explanation(0, "data:image/png;base64,AAAA", null), 1, 1);
+                new Explanation(0, "data:image/png;base64,AAAA", null), 1, 1, null, null);
     }
 
     static AiPrediction ambiguous() {
@@ -65,11 +65,18 @@ abstract class IntegrationTestBase {
                 "Early Blight", false, 51.0,
                 List.of(new Candidate("tomato__early_blight", "Tomato", "Early Blight", false, 51.0),
                         new Candidate("tomato__late_blight", "Tomato", "Late Blight", false, 40.0)),
-                null, null, 1, 1);
+                null, null, 1, 1, null, null);
+    }
+
+    /** A spot-type guess that the AI's lesion cross-check turned into "unknown" (no disease spots found) */
+    static AiPrediction noLesions() {
+        return new AiPrediction(true, "unknown", "No disease spots were found on this leaf.", "rice__brown_spot", "Rice",
+                "Brown Spot", false, 64.9, List.of(new Candidate("rice__brown_spot", "Rice", "Brown Spot", false, 64.9)),
+                new Severity(0.5, 0, "None", true), null, 1, 1, "maize", "no_lesions");
     }
 
     static AiPrediction rejected() {
         return new AiPrediction(true, "rejected", "This does not look like a leaf of a supported crop.", null, null,
-                null, null, null, List.of(), null, null, 1, 0);
+                null, null, null, List.of(), null, null, 1, 0, null, null);
     }
 }

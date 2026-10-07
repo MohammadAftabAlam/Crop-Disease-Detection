@@ -1,6 +1,6 @@
 # Experiment C (Step 3): more field data + source-balanced sampling + 288 px + near-duplicate removal.
 # Data roles:  train -> learning | val below -> choosing the best epoch
-#              plantdoc/rice/wheat val -> calibration only | all test splits -> final report
+#              plantdoc/plantwild val -> calibration (in the notebook) | all test splits -> final report
 # Missing manifests (e.g. no wheat dataset) are skipped with a warning.
 model: convnext_tiny.fb_in22k
 image_size: 288

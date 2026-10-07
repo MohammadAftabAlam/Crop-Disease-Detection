@@ -5,11 +5,12 @@ import { ArrowUpRight, CircleAlert, CloudSun, Leaf, Microscope, Search, SearchX,
 import DiseaseDrawer from "../components/DiseaseDrawer";
 import { Alert, Badge, Card, EmptyState, PageHeader, Skeleton, cx, fadeUp, stagger } from "../components/ui";
 import useDiseases from "../hooks/useDiseases";
+import { TranslationNote } from "../components/result/AdviceView";
 import usePreferences from "../hooks/usePreferences";
 import { pathogenType } from "../utils/prediction";
 
 function DiseaseTile({ disease, onOpen }) {
-  const { t, cropName } = usePreferences();
+  const { t, cropName, diseaseName } = usePreferences();
   const healthy = disease.diseaseName?.toLowerCase() === "healthy";
   const type = pathogenType(disease.pathogen);
 
@@ -30,7 +31,7 @@ function DiseaseTile({ disease, onOpen }) {
       </div>
 
       <h3 className="mt-4 text-lg font-bold text-fg">
-        {healthy ? t("library.healthyName", { crop: cropName(disease.crop) }) : disease.diseaseName}
+        {healthy ? t("library.healthyName", { crop: cropName(disease.crop) }) : diseaseName(disease.diseaseName)}
       </h3>
       {disease.pathogen && <p className="mt-0.5 truncate text-xs text-muted italic">{disease.pathogen}</p>}
 
@@ -53,8 +54,8 @@ function DiseaseTile({ disease, onOpen }) {
 }
 
 function DiseaseInfo() {
-  const { t, cropName } = usePreferences();
-  const { diseases, loading, error } = useDiseases();
+  const { t, cropName, diseaseName } = usePreferences();
+  const { diseases, loading, error, translation } = useDiseases();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [query, setQuery] = useState("");
@@ -132,6 +133,8 @@ function DiseaseInfo() {
         title={t("library.title")}
         description={t("library.description")}
       />
+
+      <TranslationNote translation={translation} className="mb-4" />
 
       <Card className="mb-6 space-y-3 p-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
