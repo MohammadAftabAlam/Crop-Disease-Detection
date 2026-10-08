@@ -109,6 +109,27 @@ Settings (environment variables or `ai-service/.env`):
 | `CROPCARE_BIOCLIP_THRESHOLD` | `0.05`; overridden by the threshold learnt with `calibrate --bioclip` |
 | `CROPCARE_DEVICE` | `cpu` |
 | `CROPCARE_PORT` | `8000` |
+| `CROPCARE_TRANSLATION_ENABLED` | `true`; `false` turns off `POST /translate` |
+| `CROPCARE_TRANSLATION_MODEL` | `facebook/nllb-200-distilled-600M` |
+| `CROPCARE_TRANSLATION_BEAMS` | `2` (1 = faster, 4 = slightly better) |
+
+## Hindi translation (`POST /translate`)
+
+The backend sends advice text here when the app is in Hindi. Meta's NLLB-200 (distilled 600M,
+CC-BY-NC 4.0, no login) runs on this machine: no account, API key or per-request cost. It loads on
+the first request (first time ever: ~2.5 GB download into the Hugging Face cache, a few minutes)
+and needs ~2.5 GB RAM while loaded; on a laptop CPU it translates about one sentence per second.
+The backend stores every translation in MySQL, so each sentence is translated only once.
+
+A general model gets farming words wrong ("whorl" became "horse rider", "caterpillars" became
+"vultures"), so `configs/glossary_hi.yaml` swaps in the correct Hindi term first, and texts are
+translated one sentence at a time. To fix a wrong word: add it to the glossary, restart, and
+delete the cached rows (`DELETE FROM translations;` in MySQL).
+
+```bash
+curl -X POST http://127.0.0.1:8000/translate -H "Content-Type: application/json" \
+     -d '{"texts": ["Install pheromone traps to monitor the moths"], "target": "hi"}'
+```
 
 ## Adding a crop or disease
 

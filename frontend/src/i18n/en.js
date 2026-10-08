@@ -233,7 +233,7 @@ const en = {
   },
 
   advice: {
-    machineTranslated: "Machine-translated by Bhashini. If anything is unclear, check with an expert.",
+    machineTranslated: "Machine-translated from English. If anything is unclear, check with an expert.",
     translationFailed: "Hindi translation is not available right now, so this text is in English.",
     noneTitle: "No advice available",
     noneText: "There is no advice for this result.",

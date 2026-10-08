@@ -32,6 +32,14 @@ class Settings(BaseSettings):
     # "unknown". 0 turns it off. Chosen from field test photos (training/evaluate_checks.py).
     min_lesion_percent: float = 1.0
 
+    # English -> Hindi advice translation, run locally (see cropcare_ai/translation.py).
+    # The model loads on the first /translate request; "false" turns the endpoint off.
+    translation_enabled: bool = True
+    translation_model: str = "facebook/nllb-200-distilled-600M"
+    translation_glossary: Path = SERVICE_DIR / "configs" / "glossary_hi.yaml"
+    translation_reviewed: Path = SERVICE_DIR / "configs" / "translations_hi.yaml"
+    translation_beams: int = 2
+
     max_images: int = 5
     max_image_mb: int = 10
 

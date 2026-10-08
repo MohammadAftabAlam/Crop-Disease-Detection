@@ -11,9 +11,19 @@ public record AppProperties(
         String frontendUrl,
         String aiServiceUrl,
         String uploadDir,
-        Bhashini bhashini) {
+        Bhashini bhashini,
+        Translation translation) {
 
     public record Jwt(String secret, Duration expiry) {
+    }
+
+    /**
+     * Hindi translation done by the AI service itself (NLLB-200 model, no account needed).
+     * Used when Bhashini has no keys. {@code localEnabled=false} turns it off.
+     * {@code warmUp}: translate the disease library in the background at startup, so the
+     * first farmer who opens a Hindi result does not wait for the model.
+     */
+    public record Translation(boolean localEnabled, boolean warmUp) {
     }
 
     /** Bhashini (Government of India) translation API. Empty userId/apiKey = translation off. */

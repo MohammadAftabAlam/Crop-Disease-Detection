@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * </ol>
  */
 @Component
-public class BhashiniClient {
+public class BhashiniClient implements Translator {
 
     private static final Logger log = LoggerFactory.getLogger(BhashiniClient.class);
     private static final Duration CONFIG_LIFETIME = Duration.ofHours(1);
@@ -52,6 +52,16 @@ public class BhashiniClient {
 
     public boolean isConfigured() {
         return settings != null && settings.configured();
+    }
+
+    @Override
+    public String name() {
+        return "Bhashini";
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return isConfigured();
     }
 
     // ---- JSON shapes (only the fields we use) ----
@@ -93,6 +103,7 @@ public class BhashiniClient {
     }
 
     /** Translate texts (same order). Throws if Bhashini is not configured or fails. */
+    @Override
     public List<String> translate(List<String> texts, String source, String target) {
         if (!isConfigured()) {
             throw new IllegalStateException("Bhashini is not configured (BHASHINI_USER_ID / BHASHINI_API_KEY)");

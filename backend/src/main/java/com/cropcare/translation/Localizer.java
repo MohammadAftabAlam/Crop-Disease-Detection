@@ -67,7 +67,7 @@ public class Localizer {
     }
 
     private static Info info(Result r) {
-        return new Info(r.language(), r.applied(), r.applied() ? "Bhashini" : null);
+        return new Info(r.language(), r.applied(), r.provider());
     }
 
     private static DiseaseDto disease(DiseaseDto d, Result r) {

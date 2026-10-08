@@ -11,3 +11,7 @@ fastapi
 uvicorn[standard]
 python-multipart
 pydantic-settings
+
+# Hindi advice translation, run locally (POST /translate; model ~2.5 GB, downloaded on first use)
+transformers>=4.40,<5
+sentencepiece

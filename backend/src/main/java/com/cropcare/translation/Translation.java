@@ -11,7 +11,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-/** A cached machine translation, so each sentence is sent to Bhashini only once. */
+/** A cached machine translation, so each sentence is translated only once. */
 @Entity
 @Table(name = "translations", uniqueConstraints = @UniqueConstraint(columnNames = { "language", "source_hash" }))
 public class Translation {

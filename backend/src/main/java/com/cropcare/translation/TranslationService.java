@@ -18,7 +18,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 /**
- * English to another language, with a database cache in front of Bhashini.
+ * English to another language, with a database cache in front of the translator:
+ * Bhashini when its keys are set, otherwise the AI service's own NLLB model.
  * Never throws: if translation is unavailable the English text is returned and
  * {@link Result#applied()} is false.
  */
@@ -26,21 +27,30 @@ import org.springframework.stereotype.Service;
 public class TranslationService {
 
     private static final Logger log = LoggerFactory.getLogger(TranslationService.class);
-    private static final String PROVIDER = "bhashini";
 
     /** Languages we translate into; English is the source of all stored text. */
     public static final List<String> SUPPORTED = List.of("hi");
 
     private final BhashiniClient bhashini;
+    private final LocalTranslatorClient local;
     private final TranslationRepository repository;
 
-    public TranslationService(BhashiniClient bhashini, TranslationRepository repository) {
+    public TranslationService(BhashiniClient bhashini, LocalTranslatorClient local, TranslationRepository repository) {
         this.bhashini = bhashini;
+        this.local = local;
         this.repository = repository;
     }
 
+    /** Bhashini if it has keys, else the local model, else none (English only). */
+    Translator activeTranslator() {
+        if (bhashini.isAvailable()) {
+            return bhashini;
+        }
+        return local.isAvailable() ? local : null;
+    }
+
     /** Translations of the given texts (keyed by the English text). */
-    public record Result(String language, boolean applied, Map<String, String> texts) {
+    public record Result(String language, boolean applied, String provider, Map<String, String> texts) {
         public String get(String english) {
             return english == null ? null : texts.getOrDefault(english, english);
         }
@@ -65,7 +75,7 @@ public class TranslationService {
                 .filter(text -> text != null && !text.isBlank())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         if ("en".equals(language) || unique.isEmpty()) {
-            return new Result(language, "en".equals(language), Map.of());
+            return new Result(language, "en".equals(language), null, Map.of());
         }
 
         Map<String, String> hashToText = unique.stream()
@@ -77,27 +87,31 @@ public class TranslationService {
         List<String> missing = new ArrayList<>(unique);
         missing.removeAll(found.keySet());
         boolean applied = true;
+        Translator translator = activeTranslator();
+        String provider = translator != null ? translator.name() : null;
 
         if (!missing.isEmpty()) {
-            try {
-                List<String> translated = bhashini.translate(missing, "en", language);
-                for (int i = 0; i < missing.size(); i++) {
-                    found.put(missing.get(i), translated.get(i));
-                    save(language, missing.get(i), translated.get(i));
-                }
-            } catch (RuntimeException e) {
+            if (translator == null) {
                 applied = false;
-                if (bhashini.isConfigured()) {
-                    log.warn("Translation to {} failed, showing English: {}", language, e.getMessage());
+            } else {
+                try {
+                    List<String> translated = translator.translate(missing, "en", language);
+                    for (int i = 0; i < missing.size(); i++) {
+                        found.put(missing.get(i), translated.get(i));
+                        save(language, missing.get(i), translated.get(i), translator.name());
+                    }
+                } catch (RuntimeException e) {
+                    applied = false;
+                    log.warn("Translation to {} by {} failed, showing English: {}", language, translator.name(), e.getMessage());
                 }
             }
         }
-        return new Result(language, applied, found);
+        return new Result(language, applied, applied ? provider : null, found);
     }
 
-    private void save(String language, String source, String translated) {
+    private void save(String language, String source, String translated, String provider) {
         try {
-            repository.save(new Translation(language, sha256(source), source, translated, PROVIDER));
+            repository.save(new Translation(language, sha256(source), source, translated, provider));
         } catch (DataIntegrityViolationException e) {
             // Another request saved the same sentence a moment ago
         }
