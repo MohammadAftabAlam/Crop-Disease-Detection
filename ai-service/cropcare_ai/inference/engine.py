@@ -96,6 +96,8 @@ class Predictor:
         metrics = {}
         for path in sorted((model_dir / "metrics").glob("*.json")):
             m = read_json(path)
+            if "name" not in m:  # e.g. checks.json from evaluate_checks: not a test set
+                continue
             metrics[m["name"]] = {k: m.get(k) for k in (
                 "description", "num_images", "accuracy", "macro_f1", "crop_accuracy", "ece",
                 "conformal", "status_rates", "accuracy_when_confident", "evaluated_at")}

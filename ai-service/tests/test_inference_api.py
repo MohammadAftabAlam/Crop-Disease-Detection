@@ -52,7 +52,9 @@ def test_missing_model_is_reported(tmp_path):
         predictor.predict([image_bytes(0)])
 
 
-def test_api_health_and_model_info(client):
+def test_api_health_and_model_info(client, settings):
+    # evaluate_checks writes metrics/checks.json, which is not a test set and must be skipped
+    (settings.classifier_dir / "metrics" / "checks.json").write_text('{"photos": 1}')
     assert client.get("/health").json()["modelLoaded"] is True
     info = client.get("/model-info").json()
     assert info["modelLoaded"] and len(info["classes"]) == 3

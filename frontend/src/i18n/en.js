@@ -95,7 +95,7 @@ const en = {
 
   scan: {
     cropTitle: "Which crop is this?",
-    cropHint: "Choosing the crop makes the result more accurate (75% vs 69% on field photos).",
+    cropHint: "Choosing the crop makes the result more accurate (73% vs 68% on field photos).",
     anyCrop: "Not sure",
     cropChosen: "Crop chosen: {crop}",
     eyebrow: "New scan",
@@ -209,7 +209,7 @@ const en = {
     downloading: "Downloading… {percent}%",
     remove: "Remove from device",
     failed: "Download failed. Check your connection and try again.",
-    limits: "Offline checks use a smaller model (62% on field photos vs 69% online) and skip severity, the heat map, weather and detailed advice.",
+    limits: "Offline checks use a smaller model (62% on field photos vs 68% online) and skip severity, the heat map, weather and detailed advice.",
     youAreOffline: "You are offline",
     offlineScanHint: "The photo will be checked on your phone and saved for a full analysis later.",
     noModelHint: "Offline mode is not downloaded, so the photo can only be saved for later.",
