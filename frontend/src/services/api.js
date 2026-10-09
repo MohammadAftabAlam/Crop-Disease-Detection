@@ -16,6 +16,13 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // Backend translates advice and library text (AI service model, or Bhashini) when this is "hi"
+    try {
+      config.headers["Accept-Language"] = localStorage.getItem("lang") || "en";
+    } catch {
+      config.headers["Accept-Language"] = "en";
+    }
+
     return config;
   },
   (error) => {

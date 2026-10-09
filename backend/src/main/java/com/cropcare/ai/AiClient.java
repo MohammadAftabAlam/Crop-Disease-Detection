@@ -73,7 +73,10 @@ public class AiClient {
             Severity severity,
             Explanation explanation,
             Integer imagesReceived,
-            Integer imagesUsed) {
+            Integer imagesUsed,
+            String selectedCrop,
+            /** Why the status is what it is, e.g. "no_lesions" when the lesion cross-check fired */
+            String reason) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -81,12 +84,23 @@ public class AiClient {
     }
 
     public AiPrediction predict(List<Path> images, boolean explain) {
+        return predict(images, explain, null);
+    }
+
+    /** crop = the farmer's crop ("rice"), or null to let the model consider every crop. */
+    public AiPrediction predict(List<Path> images, boolean explain, String crop) {
         MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
         images.forEach(image -> form.add("images", new FileSystemResource(image)));
 
         try {
             AiPrediction result = restClient.post()
-                    .uri(uri -> uri.path("/predict").queryParam("explain", explain).build())
+                    .uri(uri -> {
+                        uri.path("/predict").queryParam("explain", explain);
+                        if (crop != null && !crop.isBlank()) {
+                            uri.queryParam("crop", crop);
+                        }
+                        return uri.build();
+                    })
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(form)
                     .retrieve()

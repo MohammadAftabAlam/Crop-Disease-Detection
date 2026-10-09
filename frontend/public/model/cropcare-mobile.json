@@ -1,0 +1,203 @@
+{
+  "model": "mobilenetv3_large_100.ra_in1k",
+  "precision": "float32",
+  "version": "202610071654",
+  "imageSize": 256,
+  "mean": [
+    0.485,
+    0.456,
+    0.406
+  ],
+  "std": [
+    0.229,
+    0.224,
+    0.225
+  ],
+  "inputName": "image",
+  "classes": [
+    {
+      "classId": "pepper__bacterial_spot",
+      "crop": "Pepper",
+      "disease": "Bacterial Spot",
+      "isHealthy": false
+    },
+    {
+      "classId": "pepper__healthy",
+      "crop": "Pepper",
+      "disease": "Healthy",
+      "isHealthy": true
+    },
+    {
+      "classId": "potato__early_blight",
+      "crop": "Potato",
+      "disease": "Early Blight",
+      "isHealthy": false
+    },
+    {
+      "classId": "potato__late_blight",
+      "crop": "Potato",
+      "disease": "Late Blight",
+      "isHealthy": false
+    },
+    {
+      "classId": "potato__healthy",
+      "crop": "Potato",
+      "disease": "Healthy",
+      "isHealthy": true
+    },
+    {
+      "classId": "tomato__bacterial_spot",
+      "crop": "Tomato",
+      "disease": "Bacterial Spot",
+      "isHealthy": false
+    },
+    {
+      "classId": "tomato__early_blight",
+      "crop": "Tomato",
+      "disease": "Early Blight",
+      "isHealthy": false
+    },
+    {
+      "classId": "tomato__late_blight",
+      "crop": "Tomato",
+      "disease": "Late Blight",
+      "isHealthy": false
+    },
+    {
+      "classId": "tomato__leaf_mold",
+      "crop": "Tomato",
+      "disease": "Leaf Mold",
+      "isHealthy": false
+    },
+    {
+      "classId": "tomato__septoria_leaf_spot",
+      "crop": "Tomato",
+      "disease": "Septoria Leaf Spot",
+      "isHealthy": false
+    },
+    {
+      "classId": "tomato__spider_mites",
+      "crop": "Tomato",
+      "disease": "Spider Mites",
+      "isHealthy": false
+    },
+    {
+      "classId": "tomato__target_spot",
+      "crop": "Tomato",
+      "disease": "Target Spot",
+      "isHealthy": false
+    },
+    {
+      "classId": "tomato__yellow_leaf_curl_virus",
+      "crop": "Tomato",
+      "disease": "Yellow Leaf Curl Virus",
+      "isHealthy": false
+    },
+    {
+      "classId": "tomato__mosaic_virus",
+      "crop": "Tomato",
+      "disease": "Mosaic Virus",
+      "isHealthy": false
+    },
+    {
+      "classId": "tomato__healthy",
+      "crop": "Tomato",
+      "disease": "Healthy",
+      "isHealthy": true
+    },
+    {
+      "classId": "maize__gray_leaf_spot",
+      "crop": "Maize",
+      "disease": "Gray Leaf Spot",
+      "isHealthy": false
+    },
+    {
+      "classId": "maize__common_rust",
+      "crop": "Maize",
+      "disease": "Common Rust",
+      "isHealthy": false
+    },
+    {
+      "classId": "maize__northern_leaf_blight",
+      "crop": "Maize",
+      "disease": "Northern Leaf Blight",
+      "isHealthy": false
+    },
+    {
+      "classId": "maize__healthy",
+      "crop": "Maize",
+      "disease": "Healthy",
+      "isHealthy": true
+    },
+    {
+      "classId": "rice__bacterial_leaf_blight",
+      "crop": "Rice",
+      "disease": "Bacterial Leaf Blight",
+      "isHealthy": false
+    },
+    {
+      "classId": "rice__brown_spot",
+      "crop": "Rice",
+      "disease": "Brown Spot",
+      "isHealthy": false
+    },
+    {
+      "classId": "rice__leaf_blast",
+      "crop": "Rice",
+      "disease": "Leaf Blast",
+      "isHealthy": false
+    },
+    {
+      "classId": "rice__healthy",
+      "crop": "Rice",
+      "disease": "Healthy",
+      "isHealthy": true
+    },
+    {
+      "classId": "wheat__brown_rust",
+      "crop": "Wheat",
+      "disease": "Brown Rust",
+      "isHealthy": false
+    },
+    {
+      "classId": "wheat__yellow_rust",
+      "crop": "Wheat",
+      "disease": "Yellow Rust",
+      "isHealthy": false
+    },
+    {
+      "classId": "wheat__healthy",
+      "crop": "Wheat",
+      "disease": "Healthy",
+      "isHealthy": true
+    }
+  ],
+  "crops": [
+    "Pepper",
+    "Potato",
+    "Tomato",
+    "Maize",
+    "Rice",
+    "Wheat"
+  ],
+  "temperature": 0.9458237881322377,
+  "qhat": 0.9681816101074219,
+  "energyThreshold": -4.093360424041748,
+  "tta": true,
+  "minConfidentProbability": 0.5,
+  "maxAmbiguousSet": 3,
+  "createdAt": "2026-10-07T16:54:52+00:00",
+  "check": {
+    "images": 541,
+    "onnx_file": "model.onnx",
+    "accuracy_onnx": 0.6247689463955638,
+    "accuracy_pytorch": 0.6247689463955638,
+    "top1_agreement": 1.0,
+    "confident_rate": 0.2199630314232902,
+    "accuracy_when_confident": 0.8823529411764706,
+    "test_sets": [
+      "data/manifests/plantdoc.csv",
+      "data/manifests/plantwild.csv"
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 import api from "./api";
 
 // 1-5 photos of the same plant. lat/lon add a weather risk, explain adds Grad-CAM overlays.
-export const predictDisease = async (imageFiles, { lat, lon, explain = true } = {}) => {
+export const predictDisease = async (imageFiles, { lat, lon, explain = true, crop } = {}) => {
   const formData = new FormData();
 
   imageFiles.forEach((file) => formData.append("images", file));
@@ -12,6 +12,11 @@ export const predictDisease = async (imageFiles, { lat, lon, explain = true } = 
   }
 
   formData.append("explain", explain);
+
+  // The farmer's crop: the model then chooses only among that crop's diseases
+  if (crop) {
+    formData.append("crop", crop);
+  }
 
   const response = await api.post("/predictions/detect", formData, {
     headers: {

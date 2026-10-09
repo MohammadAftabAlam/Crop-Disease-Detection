@@ -47,6 +47,13 @@ function PreferencesProvider({ children }) {
     saveSetting("lang", lang);
   }, [lang]);
 
+  // Saved immediately (not in an effect): pages reload their text when lang changes, and the
+  // API reads the language from storage, so it must already be there when they do
+  const changeLang = useCallback((next) => {
+    saveSetting("lang", next);
+    setLang(next);
+  }, []);
+
   const toggleTheme = useCallback(() => {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
   }, []);
@@ -80,17 +87,31 @@ function PreferencesProvider({ children }) {
     [lang]
   );
 
+  // Disease names also come in English ("Late Blight"); unknown names are shown as they are
+  const diseaseName = useCallback(
+    (disease) => {
+      if (!disease) {
+        return "";
+      }
+
+      const key = disease.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+      return lookup(DICTIONARIES[lang], `diseases.${key}`) || disease;
+    },
+    [lang]
+  );
+
   const value = useMemo(
     () => ({
       theme,
       toggleTheme,
       lang,
-      setLang,
+      setLang: changeLang,
       locale: lang === "hi" ? "hi-IN" : "en-IN",
       t,
       cropName,
+      diseaseName,
     }),
-    [theme, toggleTheme, lang, t, cropName]
+    [theme, toggleTheme, lang, changeLang, t, cropName, diseaseName]
   );
 
   return (

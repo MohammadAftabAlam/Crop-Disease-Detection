@@ -27,12 +27,15 @@ ai-service/.env
 *.keras
 *.pt
 *.onnx
+# ...except the offline model the web app serves
+!frontend/public/model/cropcare-mobile.onnx
 
 # Uploaded images
 backend/uploads/
 
 # Build output
 frontend/dist/
+frontend/dev-dist/
 backend/target/
 
 # OS / editor

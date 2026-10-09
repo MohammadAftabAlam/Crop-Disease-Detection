@@ -69,7 +69,7 @@ class BioClipGate:
             plant_probability = float(row[: self.num_positive].sum())
             results.append({
                 "passed": plant_probability >= self.min_plant_probability,
-                "plantProbability": round(plant_probability, 3),
+                "plantProbability": round(plant_probability, 4),
                 "likelyCrop": self.crop_names[int(row[: self.num_positive].argmax())],
             })
         return results

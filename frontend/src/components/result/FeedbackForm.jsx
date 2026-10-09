@@ -9,7 +9,7 @@ import { formatDate } from "../../utils/prediction";
 
 // "Was this right?" - stored with the prediction to measure real-world accuracy
 function FeedbackForm({ prediction, onSaved }) {
-  const { t, cropName, locale } = usePreferences();
+  const { t, cropName, locale, diseaseName } = usePreferences();
   const { diseases } = useDiseases();
   const existing = prediction.feedback;
 
@@ -135,7 +135,7 @@ function FeedbackForm({ prediction, onSaved }) {
                   <optgroup key={crop} label={cropName(crop)}>
                     {items.map((disease) => (
                       <option key={disease.code} value={disease.code}>
-                        {cropName(disease.crop)} – {disease.diseaseName}
+                        {cropName(disease.crop)} – {diseaseName(disease.diseaseName)}
                       </option>
                     ))}
                   </optgroup>

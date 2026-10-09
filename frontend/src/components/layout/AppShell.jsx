@@ -17,6 +17,7 @@ import usePreferences from "../../hooks/usePreferences";
 import { getInitials } from "../../utils/helpers";
 import { cx } from "../ui";
 import { Backdrop, LanguageToggle, Logo, ThemeToggle } from "./Controls";
+import PendingScansBanner from "../PendingScansBanner";
 
 const NAV = [
   { to: "/dashboard", label: "nav.dashboard", icon: LayoutDashboard, auth: true },
@@ -220,6 +221,7 @@ function AppShell() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           >
+            {user && <PendingScansBanner />}
             <Outlet />
           </motion.div>
         </main>

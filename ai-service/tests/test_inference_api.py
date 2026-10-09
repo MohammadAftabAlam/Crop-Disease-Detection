@@ -52,7 +52,9 @@ def test_missing_model_is_reported(tmp_path):
         predictor.predict([image_bytes(0)])
 
 
-def test_api_health_and_model_info(client):
+def test_api_health_and_model_info(client, settings):
+    # evaluate_checks writes metrics/checks.json, which is not a test set and must be skipped
+    (settings.classifier_dir / "metrics" / "checks.json").write_text('{"photos": 1}')
     assert client.get("/health").json()["modelLoaded"] is True
     info = client.get("/model-info").json()
     assert info["modelLoaded"] and len(info["classes"]) == 3
@@ -78,3 +80,32 @@ def test_api_rejects_bad_input(client):
 
     too_many = [("images", (f"{i}.jpg", image_bytes(0, seed=i), "image/jpeg")) for i in range(6)]
     assert client.post("/predict", files=too_many).status_code == 400
+
+
+def test_crop_selection_limits_answers_to_that_crop(predictor):
+    result = predictor.predict([image_bytes(0)], crop="potato")
+    assert result["selectedCrop"] == "potato"
+    if result["status"] != "rejected":
+        assert all(c["classId"].startswith("potato__") for c in result["candidates"])
+        assert result["classId"].startswith("potato__")
+
+
+def test_unknown_crop_is_a_clear_error(client):
+    response = client.post("/predict?crop=banana", files={"image": ("leaf.jpg", image_bytes(0), "image/jpeg")})
+    assert response.status_code == 400
+    assert "banana" in response.json()["message"]
+
+
+def test_lesion_cross_check_downgrades_spotless_disease(settings, monkeypatch):
+    predictor = Predictor(settings)
+    predictor.min_lesion_percent = 1.0
+    # Pretend the lesion model finds almost nothing on the leaf
+    monkeypatch.setattr(predictor.severity, "estimate",
+                        lambda image: {"percent": 0.2, "grade": 0, "label": "None", "leafAreaFound": True,
+                                       "_lesion_mask": __import__("numpy").zeros((8, 8), bool)})
+    for color in range(3):
+        result = predictor.predict([image_bytes(color, seed=11)])
+        disease = predictor.taxonomy.classes.get(result["classId"]) if result["classId"] else None
+        if disease is not None and disease.lesions:
+            # a lesion-type disease with 0.2% lesions is never shown as a diagnosis
+            assert result["status"] == "unknown" and result["reason"] == "no_lesions"

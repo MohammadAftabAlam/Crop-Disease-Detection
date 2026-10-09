@@ -25,18 +25,20 @@ import FeedbackForm from "../components/result/FeedbackForm";
 import { Alert, Badge, Button, Card, EmptyState, SectionTitle, Skeleton, cx, fadeUp, stagger } from "../components/ui";
 import { getPredictionById } from "../services/predictionService";
 import usePreferences from "../hooks/usePreferences";
-import { RISK_TONE, formatDate, statusInfo } from "../utils/prediction";
+import useModelInfo from "../hooks/useModelInfo";
+import { SUPPORTED_CROPS } from "../utils/constants";
+import { RISK_TONE, formatDate, predictionMessage, statusInfo } from "../utils/prediction";
 
-function resultTitle(prediction, t) {
+function resultTitle(prediction, t, diseaseName) {
   switch (prediction.status) {
     case "rejected":
       return t("result.rejectedTitle");
     case "unknown":
-      return t("result.unknownTitle");
+      return t(prediction.reason === "no_lesions" ? "result.noLesionsTitle" : "result.unknownTitle");
     case "ambiguous":
-      return t("result.ambiguousTitle", { disease: prediction.disease });
+      return t("result.ambiguousTitle", { disease: diseaseName(prediction.disease) });
     default:
-      return prediction.isHealthy ? t("result.healthyTitle") : prediction.disease;
+      return prediction.isHealthy ? t("result.healthyTitle") : diseaseName(prediction.disease);
   }
 }
 
@@ -52,7 +54,9 @@ function Metric({ icon: Icon, label, children }) {
 }
 
 function Summary({ prediction }) {
-  const { t, cropName, locale } = usePreferences();
+  const preferences = usePreferences();
+  const { t, cropName, diseaseName, locale } = preferences;
+  const crops = useModelInfo()?.crops || SUPPORTED_CROPS;
   const status = statusInfo(prediction.status);
   const tone = prediction.isHealthy ? "success" : status.tone;
   const photos = prediction.imageUrls || [];
@@ -79,15 +83,18 @@ function Summary({ prediction }) {
             <span className="inline-flex items-center gap-1.5 text-xs text-muted">
               <Calendar className="size-3.5" /> {formatDate(prediction.createdAt, locale)}
             </span>
+            {prediction.selectedCrop && (
+              <span className="text-xs text-muted">{t("scan.cropChosen", { crop: cropName(prediction.selectedCrop) })}</span>
+            )}
           </div>
 
           {prediction.crop && diagnosed && (
             <p className="mt-5 text-xs font-bold tracking-[0.18em] text-primary uppercase">{cropName(prediction.crop)}</p>
           )}
           <h1 className={cx("text-3xl font-extrabold tracking-tight text-fg sm:text-4xl", !(prediction.crop && diagnosed) && "mt-5")}>
-            {resultTitle(prediction, t)}
+            {resultTitle(prediction, t, diseaseName)}
           </h1>
-          {prediction.message && <p className="mt-2 max-w-2xl text-muted">{prediction.message}</p>}
+          <p className="mt-2 max-w-2xl text-muted">{predictionMessage(prediction, preferences, crops)}</p>
 
           {diagnosed && (
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -124,7 +131,7 @@ function Summary({ prediction }) {
 }
 
 function Overview({ prediction, onShowTab }) {
-  const { t, cropName } = usePreferences();
+  const { t, cropName, diseaseName } = usePreferences();
   const tone = prediction.isHealthy ? "success" : statusInfo(prediction.status).tone;
   const candidates = prediction.candidates || [];
   const rejected = prediction.status === "rejected";
@@ -133,7 +140,9 @@ function Overview({ prediction, onShowTab }) {
     <motion.div variants={stagger} initial="hidden" animate="show" className="grid gap-5 lg:grid-cols-2">
       <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-6">
         <SectionTitle icon={FileSearch}>{t("result.meaning")}</SectionTitle>
-        <p className="text-sm leading-relaxed text-muted">{t(`status.${prediction.status}.explain`)}</p>
+        <p className="text-sm leading-relaxed text-muted">
+          {prediction.reason === "no_lesions" ? t("result.noLesionsExplain") : t(`status.${prediction.status}.explain`)}
+        </p>
 
         <div className="mt-5 flex flex-wrap gap-3">
           {rejected || prediction.status === "unknown" ? (
@@ -161,7 +170,7 @@ function Overview({ prediction, onShowTab }) {
                 value={candidate.confidence}
                 // Highlight the top match, grey the rest
                 tone={index === 0 ? tone : "neutral"}
-                label={`${cropName(candidate.crop)} – ${candidate.disease}`}
+                label={`${cropName(candidate.crop)} – ${diseaseName(candidate.disease)}`}
               />
             ))}
           </div>
@@ -217,32 +226,44 @@ function ResultSkeleton() {
 function Result() {
   const { id } = useParams();
   const location = useLocation();
-  const { t } = usePreferences();
+  const { t, lang, diseaseName } = usePreferences();
 
   // Right after a scan the result (with its Grad-CAM images) comes with the navigation
   const fromScan = location.state?.prediction;
-  const [prediction, setPrediction] = useState(
-    fromScan && String(fromScan.id) === id ? fromScan : null
-  );
+  const scanMatches = fromScan && String(fromScan.id) === id;
+  const [prediction, setPrediction] = useState(scanMatches ? fromScan : null);
+  const [translation, setTranslation] = useState(scanMatches ? location.state?.translation : null);
+  const [loadedLang, setLoadedLang] = useState(scanMatches ? lang : null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState("overview");
 
   useEffect(() => {
-    if (prediction && String(prediction.id) === id) {
+    if (prediction && String(prediction.id) === id && loadedLang === lang) {
       return undefined;
     }
 
     let active = true;
 
     getPredictionById(id)
-      .then((data) => active && setPrediction(data.prediction))
+      .then((data) => {
+        if (!active) {
+          return;
+        }
+        // Grad-CAM images are only sent right after a scan; keep them across language switches
+        setPrediction((current) => ({
+          ...data.prediction,
+          explanation: String(current?.id) === id ? current.explanation : data.prediction.explanation,
+        }));
+        setTranslation(data.translation);
+        setLoadedLang(lang);
+      })
       .catch((err) => active && setError(err.response?.data?.message || t("result.loadFailed")));
 
     return () => {
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, lang]);
 
   // The feedback response has no Grad-CAM images; keep the ones we have
   const handleFeedbackSaved = (updated) => {
@@ -314,6 +335,8 @@ function Result() {
               {tab === "treatment" && (
                 <AdviceView
                   advice={prediction.advice}
+                  title={resultTitle(prediction, t, diseaseName)}
+                  translation={translation}
                   classId={prediction.classId}
                   showLibraryLink={prediction.status === "confident" && !prediction.isHealthy}
                 />

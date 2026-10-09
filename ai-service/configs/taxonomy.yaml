@@ -8,6 +8,9 @@
 #
 # `id` is what the backend stores and uses to look up advice, so never rename
 # an id once models have been trained with it.
+#
+# `lesions: false` marks conditions that do not leave spot/blight-type lesions (viruses, mites,
+# insect feeding). Severity is not measured for them, and the lesion cross-check skips them.
 
 crops:
   pepper: { name: Pepper }
@@ -68,6 +71,7 @@ classes:
   - id: tomato__spider_mites
     crop: tomato
     disease: Spider Mites
+    lesions: false
     aliases: [Tomato_Spider_mites_Two_spotted_spider_mite, Tomato___Spider_mites Two-spotted_spider_mite, Tomato two spotted spider mites leaf]
   - id: tomato__target_spot
     crop: tomato
@@ -76,10 +80,12 @@ classes:
   - id: tomato__yellow_leaf_curl_virus
     crop: tomato
     disease: Yellow Leaf Curl Virus
+    lesions: false
     aliases: [Tomato__Tomato_YellowLeaf__Curl_Virus, Tomato___Tomato_Yellow_Leaf_Curl_Virus, Tomato leaf yellow virus]
   - id: tomato__mosaic_virus
     crop: tomato
     disease: Mosaic Virus
+    lesions: false
     aliases: [Tomato__Tomato_mosaic_virus, Tomato___Tomato_mosaic_virus, Tomato leaf mosaic virus]
   - id: tomato__healthy
     crop: tomato
@@ -100,6 +106,12 @@ classes:
     crop: maize
     disease: Northern Leaf Blight
     aliases: [Corn_(maize)___Northern_Leaf_Blight, Corn leaf blight, Corn Blight, Corn Northern Leaf Blight, Blight, Northern Corn Leaf Blight]
+  - id: maize__insect_damage
+    crop: maize
+    disease: Insect Feeding Damage
+    lesions: false
+    # Corn Leaf Infection dataset (Kaggle, qramkrishna): field photos, mostly fall armyworm damage
+    aliases: [Maize Infected, Corn Infected, Fall Armyworm, Maize Fall Armyworm, Corn Fall Armyworm]
   - id: maize__healthy
     crop: maize
     disease: Healthy
@@ -119,6 +131,12 @@ classes:
     crop: rice
     disease: Leaf Blast
     aliases: [Blast, Rice Blast, Rice___Leaf_Blast]
+  - id: rice__hispa
+    crop: rice
+    disease: Hispa
+    lesions: false
+    # Rice hispa beetle scrapes the leaf, leaving white streaks (Rice Leafs dataset on Kaggle)
+    aliases: [Rice Hispa, RiceHispa]
   - id: rice__healthy
     crop: rice
     disease: Healthy
@@ -134,6 +152,18 @@ classes:
     crop: wheat
     disease: Yellow Rust
     aliases: [Stripe Rust, Wheat___Yellow_Rust, Wheat Stripe Rust]
+  - id: wheat__aphid
+    crop: wheat
+    disease: Aphids
+    lesions: false
+    # "Aphid" folder of the Kaggle wheat disease dataset (prepared with --crop wheat)
+    aliases: [Wheat Aphid, Wheat Aphids]
+  - id: wheat__mite
+    crop: wheat
+    disease: Mites
+    lesions: false
+    # "Mite" folder of the Kaggle wheat disease dataset
+    aliases: [Wheat Mite, Wheat Mites]
   - id: wheat__healthy
     crop: wheat
     disease: Healthy

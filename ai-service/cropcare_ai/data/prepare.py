@@ -101,6 +101,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--all-test", action="store_true", help="Put every image in the test split (field photos)")
     parser.add_argument("--val-from-train", type=float, default=0.0,
                         help="With --layout keep: move this fraction of train into val/calib (e.g. 0.2)")
+    parser.add_argument("--min-class-images", type=int, default=0,
+                        help="Drop classes with fewer images than this (too few to learn from); 0 keeps all")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out", type=Path, help="Default: data/manifests/<name>.csv")
     args = parser.parse_args(argv)
@@ -134,6 +136,17 @@ def main(argv: list[str] | None = None) -> None:
         seen.add(sha1)
         rows.append(Row(str(path.resolve()), class_id, args.name, split or "", sha1, dhash))
 
+    # Classes too small to learn from would only add noise
+    small = {}
+    if args.min_class_images > 0:
+        counts = {}
+        for r in rows:
+            counts[r.class_id] = counts.get(r.class_id, 0) + 1
+        small = {c: n for c, n in counts.items() if n < args.min_class_images}
+        rows = [r for r in rows if r.class_id not in small]
+        if not rows:
+            raise SystemExit("Every class is below --min-class-images.")
+
     if args.all_test:
         rows = [dataclasses.replace(r, split="test") for r in rows]
     elif layout == "random":
@@ -152,6 +165,7 @@ def main(argv: list[str] | None = None) -> None:
 
     summary = summarize(rows)
     summary.update({"duplicates_removed": duplicates, "unmapped_folders": sorted(unmapped), "root": str(root),
+                    "dropped_small_classes": small,
                     "layout": layout})
     out.with_suffix(".summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
@@ -161,6 +175,8 @@ def main(argv: list[str] | None = None) -> None:
     print("Duplicates removed:", duplicates)
     if unmapped:
         print("Skipped folders (not in taxonomy):", ", ".join(sorted(unmapped)))
+    if small:
+        print(f"Dropped classes with fewer than {args.min_class_images} images:", small)
 
 
 if __name__ == "__main__":

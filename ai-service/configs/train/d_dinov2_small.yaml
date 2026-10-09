@@ -1,0 +1,41 @@
+# Experiment D: Experiment C + two insect-damage classes (maize insect feeding damage, rice hispa).
+# Extra data: Corn Leaf Infection (qramkrishna) and Rice Leafs (shayanriyaz) on Kaggle.
+# Data roles:  train -> learning | val below -> choosing the best epoch
+#              plantdoc/plantwild val -> calibration (in the notebook) | all test splits -> final report
+# Missing manifests (e.g. no wheat dataset) are skipped with a warning.
+model: vit_small_patch14_dinov2.lvd142m
+image_size: 224
+epochs: 15
+freeze_epochs: 1
+batch_size: 32
+lr: 2.0e-4
+backbone_lr_mult: 0.1
+sampling: class_source
+near_duplicate_distance: 4
+train:
+  - { manifest: data/manifests/plantvillage.csv, split: train }
+  - { manifest: data/manifests/plantdoc.csv, split: train }
+  - { manifest: data/manifests/plantwild.csv, split: train }
+  - { manifest: data/manifests/rice.csv, split: train }
+  - { manifest: data/manifests/wheat.csv, split: train }
+  - { manifest: data/manifests/maizepest.csv, split: train }
+  - { manifest: data/manifests/rice2.csv, split: train }
+val:
+  - { manifest: data/manifests/plantvillage.csv, split: val }
+  - { manifest: data/manifests/plantwild.csv, split: val }
+  - { manifest: data/manifests/maizepest.csv, split: val }
+  - { manifest: data/manifests/rice2.csv, split: val }
+check_leakage_against:
+  - { manifest: data/manifests/plantvillage.csv, split: test }
+  - { manifest: data/manifests/plantdoc.csv, split: val }
+  - { manifest: data/manifests/plantdoc.csv, split: test }
+  - { manifest: data/manifests/plantwild.csv, split: test }
+  - { manifest: data/manifests/rice.csv, split: val }
+  - { manifest: data/manifests/rice.csv, split: test }
+  - { manifest: data/manifests/wheat.csv, split: val }
+  - { manifest: data/manifests/wheat.csv, split: test }
+  - { manifest: data/manifests/maizepest.csv, split: test }
+  - { manifest: data/manifests/rice2.csv, split: test }
+  - { manifest: data/manifests/field.csv, split: test }
+output: artifacts/d_dinov2_small
+model_kwargs: {img_size: 224}

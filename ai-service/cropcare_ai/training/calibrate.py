@@ -31,6 +31,7 @@ from cropcare_ai.training.metrics import expected_calibration_error, softmax
 
 
 MIN_TEMPERATURE, MAX_TEMPERATURE = 0.5, 10.0
+MIN_BIOCLIP_THRESHOLD = 0.01
 
 
 def fit_temperature(logits: np.ndarray, labels: np.ndarray) -> float:
@@ -61,6 +62,30 @@ def conformal_qhat(probs: np.ndarray, labels: np.ndarray, alpha: float) -> float
     return float(np.quantile(scores, level, method="higher"))
 
 
+def bioclip_threshold(rows, bundle, pass_rate: float, device: str) -> dict:
+    """Pick the BioCLIP plant-probability cut-off that lets `pass_rate` of real calibration leaves through."""
+    from cropcare_ai.data.datasets import load_rgb
+    from cropcare_ai.inference.gate import BioClipGate
+    from cropcare_ai.settings import get_settings
+    from cropcare_ai.taxonomy import Taxonomy
+
+    taxonomy = Taxonomy.load(get_settings().taxonomy_path)
+    crops = list(dict.fromkeys(taxonomy[c].crop_name for c in bundle.class_ids))
+    gate = BioClipGate(crops, device)
+    supported = [row for row in rows if row.class_id in set(bundle.class_ids)]
+    scores = []
+    for start in range(0, len(supported), 32):
+        images = [load_rgb(row.path) for row in supported[start:start + 32]]
+        scores += [result["plantProbability"] for result in gate.check(images)]
+    quantiles = {f"{q:.0%}": round(float(np.quantile(scores, q)), 4) for q in (0.01, 0.02, 0.05, 0.10, 0.50)}
+    # Floor: never accept everything. Non-plant photos (blank, noise, people, objects) score ~0.001-0.003.
+    threshold = max(float(np.quantile(scores, 1 - pass_rate)), MIN_BIOCLIP_THRESHOLD)
+    actual_pass = float(np.mean(np.array(scores) >= threshold))
+    print(f"BioCLIP scores of real leaves (quantiles): {quantiles}")
+    print(f"BioCLIP threshold {threshold:.4f}: {actual_pass:.1%} of {len(scores)} real leaves pass")
+    return {"bioclip_threshold": threshold, "bioclip_pass_rate": actual_pass, "bioclip_score_quantiles": quantiles}
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--model-dir", default=str(get_settings().classifier_dir))
@@ -70,6 +95,10 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--alpha", type=float, default=0.1, help="Allowed miss rate of the prediction set")
     parser.add_argument("--energy-pass-rate", type=float, default=0.99,
                         help="Fraction of calibration images that must pass the energy gate")
+    parser.add_argument("--bioclip", action="store_true",
+                        help="Also learn the BioCLIP gate threshold (needs open_clip_torch)")
+    parser.add_argument("--bioclip-pass-rate", type=float, default=0.99,
+                        help="Fraction of real calibration leaves the BioCLIP gate must accept")
     parser.add_argument("--tta", action="store_true", help="Average with flipped images (also used by evaluate and the API)")
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--num-workers", type=int, default=2)
@@ -117,6 +146,8 @@ def main(argv: list[str] | None = None) -> None:
         },
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
+    if args.bioclip:
+        calibration.update(bioclip_threshold(rows, bundle, args.bioclip_pass_rate, device))
     write_json(calibration, model_dir / "calibration.json")
 
     print(f"Temperature {temperature:.3f} | ECE {calibration['ece']['before']:.4f} -> {calibration['ece']['after']:.4f}")

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Siren,
   TriangleAlert,
+  Languages,
 } from "lucide-react";
 import { Alert, Badge, Card, EmptyState, SectionTitle, fadeUp, stagger } from "../ui";
 import { URGENCY_TONE } from "../../utils/prediction";
@@ -44,8 +45,26 @@ function List({ items, numbered = false }) {
   );
 }
 
-// Treatment advice from the backend's AdvisoryService (template based, English)
-function AdviceView({ advice, classId, showLibraryLink }) {
+// Shown when the page is in Hindi: says whether the text was machine-translated or left in English
+export function TranslationNote({ translation, className = "" }) {
+  const { t, lang } = usePreferences();
+
+  if (lang === "en" || !translation || translation.language === "en") {
+    return null;
+  }
+
+  return translation.applied ? (
+    <p className={`flex items-center gap-1.5 text-xs text-subtle ${className}`}>
+      <Languages className="size-3.5 shrink-0" /> {t("advice.machineTranslated")}
+    </p>
+  ) : (
+    <Alert tone="warning" icon={Languages} className={className}>{t("advice.translationFailed")}</Alert>
+  );
+}
+
+// Treatment advice from the backend's AdvisoryService. title is the app's own (translated) name
+// for the result; translation says whether the backend could translate the text.
+function AdviceView({ advice, classId, showLibraryLink, title, translation }) {
   const { t } = usePreferences();
 
   if (!advice) {
@@ -60,8 +79,9 @@ function AdviceView({ advice, classId, showLibraryLink }) {
       <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-fg">{advice.headline}</h2>
+            <h2 className="text-xl font-bold text-fg">{title || advice.headline}</h2>
             {advice.urgencyText && <p className="mt-1 text-muted">{advice.urgencyText}</p>}
+            <TranslationNote translation={translation} className="mt-2" />
           </div>
           <Badge tone={URGENCY_TONE[urgency]} icon={URGENCY_ICON[urgency]} className="self-start">
             {t(`advice.urgency.${urgency}`)}

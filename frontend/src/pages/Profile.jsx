@@ -14,6 +14,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { Alert, Button, Card, PageHeader, SectionTitle, Segmented, fadeUp, stagger } from "../components/ui";
+import OfflineModeCard from "../components/OfflineModeCard";
 import PasswordField, { PasswordRules } from "../components/PasswordField";
 import useAuth from "../hooks/useAuth";
 import usePreferences from "../hooks/usePreferences";
@@ -69,7 +70,7 @@ function ChangePassword() {
   };
 
   return (
-    <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-7 lg:col-span-2">
+    <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-7">
       <SectionTitle icon={KeyRound}>{t("profile.passwordTitle")}</SectionTitle>
       <p className="-mt-2 mb-6 text-sm text-muted">{t("profile.passwordText")}</p>
 
@@ -176,7 +177,12 @@ function Profile() {
           </Card>
         </div>
 
-        <ChangePassword />
+        <div className="space-y-6 lg:col-span-2">
+          <ChangePassword />
+          <motion.div variants={fadeUp}>
+            <OfflineModeCard />
+          </motion.div>
+        </div>
       </motion.div>
     </>
   );

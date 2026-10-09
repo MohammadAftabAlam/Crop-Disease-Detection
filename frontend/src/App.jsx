@@ -15,6 +15,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import DetectDisease from "./pages/DetectDisease";
 import Result from "./pages/Result";
+import OfflineResult from "./pages/OfflineResult";
 import History from "./pages/History";
 import DiseaseInfo from "./pages/DiseaseInfo";
 import Profile from "./pages/Profile";
@@ -54,6 +55,7 @@ function App() {
                   <Route path="/detect" element={<DetectDisease />} />
                   <Route path="/result" element={<Navigate to="/detect" replace />} />
                   <Route path="/result/:id" element={<Result />} />
+                  <Route path="/offline-result" element={<OfflineResult />} />
                   <Route path="/history" element={<History />} />
                   <Route path="/profile" element={<Profile />} />
                 </Route>

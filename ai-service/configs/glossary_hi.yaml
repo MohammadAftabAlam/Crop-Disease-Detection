@@ -1,0 +1,106 @@
+# English -> Hindi farming terms, swapped into the English text BEFORE machine translation.
+# A general translation model gets these words wrong (it turned "whorl" into "horse rider" and
+# "caterpillars" into "vultures"), so the correct Hindi term is put in place and the model
+# translates the rest of the sentence around it.
+# Longer phrases win over shorter ones; matching ignores case and respects word boundaries.
+# To fix a wrong word in the app, add it here and clear the translations table in MySQL.
+
+# Pests and insects
+caterpillars: इल्लियों
+caterpillar: इल्ली
+armyworm: फॉल आर्मीवर्म
+fall armyworm: फॉल आर्मीवर्म
+larvae: लार्वा
+larva: लार्वा
+grubs: लार्वा (ग्रब)
+moths: पतंगों
+moth: पतंगा
+aphids: माहू
+aphid: माहू
+mites: माइट
+spider mites: लाल मकड़ी (माइट)
+whiteflies: सफ़ेद मक्खियों
+whitefly: सफ़ेद मक्खी
+beetles: भृंगों
+grasshoppers: टिड्डों
+hispa: हिस्पा
+egg masses: अंडों के गुच्छों
+droppings: मल (बीट)
+webbing: जाले
+honeydew: मधुरस (चिपचिपा रस)
+sooty mould: काली फफूंद
+natural enemies: मित्र कीटों
+insect vectors: वाहक कीटों
+vectors: वाहक कीटों
+pheromone traps: फेरोमोन ट्रैप
+sticky traps: चिपचिपे ट्रैप
+
+# Crops (the model read "pepper" as butter)
+pepper: शिमला मिर्च
+
+# Plant parts and crop stages
+ears: बालियों
+veins: शिराओं
+whorl: गोभ
+panicle: बाली
+panicles: बालियों
+tillering: कल्ले निकलने
+tillers: कल्लों
+nodes: गांठों
+leaf sheath: पर्णच्छद
+seedlings: पौध
+nursery: नर्सरी
+undersides: निचली सतह
+stubble: ठूंठ
+crop residue: फसल अवशेष
+volunteer plants: अपने आप उगे पौधों
+bunds: मेड़ों
+
+# Diseases and symptoms
+dark spots: गहरे रंग के धब्बे
+dark lesions: गहरे रंग के धब्बे
+lesions: धब्बे
+lesion: धब्बा
+halos: घेरे
+halo: घेरा
+pustules: फफोले
+spores: बीजाणु
+blight: झुलसा
+blights: झुलसा
+rust: रतुआ
+powdery mildew: चूर्णिल आसिता
+mildew: फफूंदी
+mosaic: मोज़ेक
+leaf curl: पत्ती मरोड़
+wilting: मुरझाना
+water-soaked: पानी से भीगे जैसे
+concentric rings: गोल छल्ले
+kresek: क्रेसेक (पौध का सूखना)
+
+# Inputs and control
+fungicide: फफूंदनाशक
+fungicides: फफूंदनाशक
+insecticide: कीटनाशक
+insecticides: कीटनाशक
+bactericide: जीवाणुनाशक
+bio-agents: जैविक एजेंट
+neem oil: नीम का तेल
+trichoderma viride: ट्राइकोडर्मा विरिडी
+pseudomonas fluorescens: स्यूडोमोनास फ्लोरेसेंस
+following the label: लेबल के अनुसार
+as per the label: लेबल के अनुसार
+waiting period: प्रतीक्षा अवधि
+broad-spectrum sprays: सभी कीटों को मारने वाले छिड़काव
+certified seed: प्रमाणित बीज
+resistant varieties: रोग-प्रतिरोधी किस्में
+tolerant varieties: सहनशील किस्में
+crop rotation: फसल चक्र
+overhead irrigation: ऊपर से (फव्वारे से) सिंचाई
+overhead watering: ऊपर से पानी देना
+fertiliser: खाद
+manure: गोबर की खाद
+potash: पोटाश
+
+# Organisations
+krishi vigyan kendra: कृषि विज्ञान केंद्र
+kisan call centre: किसान कॉल सेंटर

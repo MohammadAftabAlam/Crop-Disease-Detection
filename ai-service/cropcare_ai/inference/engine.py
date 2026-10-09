@@ -28,6 +28,10 @@ class ModelNotLoaded(RuntimeError):
     pass
 
 
+class UnknownCrop(ValueError):
+    pass
+
+
 class Predictor:
     def __init__(self, settings: Settings):
         self.settings = settings
@@ -41,6 +45,7 @@ class Predictor:
         self.severity: SeverityEstimator | None = None
         self.bioclip = None
         self.load_error: str | None = None
+        self.min_lesion_percent = settings.min_lesion_percent
         self._load()
 
     # ------------------------------------------------------------------ loading
@@ -67,7 +72,9 @@ class Predictor:
             self.severity = SeverityEstimator(model, bundle, self.taxonomy, self.device)
 
         if self.settings.gate == "bioclip":
-            self.bioclip = build_bioclip_gate(self.crop_names, self.device, self.settings.bioclip_threshold)
+            # A threshold learnt during calibration (calibrate --bioclip) beats the generic default
+            threshold = self.calibration.get("bioclip_threshold", self.settings.bioclip_threshold)
+            self.bioclip = build_bioclip_gate(self.crop_names, self.device, threshold)
 
     @property
     def loaded(self) -> bool:
@@ -89,6 +96,8 @@ class Predictor:
         metrics = {}
         for path in sorted((model_dir / "metrics").glob("*.json")):
             m = read_json(path)
+            if "name" not in m:  # e.g. checks.json from evaluate_checks: not a test set
+                continue
             metrics[m["name"]] = {k: m.get(k) for k in (
                 "description", "num_images", "accuracy", "macro_f1", "crop_accuracy", "ece",
                 "conformal", "status_rates", "accuracy_when_confident", "evaluated_at")}
@@ -107,6 +116,7 @@ class Predictor:
                                                                 "calibrated_on", "ece")},
             "gate": "bioclip+energy" if self.bioclip else "energy",
             "severityModel": self.severity is not None,
+            "lesionCrossCheckPercent": self.min_lesion_percent,
             "metrics": metrics,
         }
 
@@ -115,9 +125,22 @@ class Predictor:
     def _candidate(self, index: int, probs: np.ndarray) -> dict:
         return {**self.taxonomy[self.bundle.class_ids[index]].as_dict(), "confidence": round(float(probs[index]) * 100, 2)}
 
-    def predict(self, images_bytes: list[bytes], explain: bool = False, with_severity: bool = True) -> dict:
+    def crop_key(self, crop: str | None) -> str | None:
+        """'Rice' / 'rice' -> 'rice'; None = no crop chosen. Raises UnknownCrop for crops the model lacks."""
+        if not crop:
+            return None
+        wanted = crop.strip().lower()
+        for class_id in self.bundle.class_ids:
+            c = self.taxonomy[class_id]
+            if wanted in (c.crop, c.crop_name.lower()):
+                return c.crop
+        raise UnknownCrop(f"This model does not cover the crop '{crop}'. Supported: {', '.join(self.crop_names)}.")
+
+    def predict(self, images_bytes: list[bytes], explain: bool = False, with_severity: bool = True,
+                crop: str | None = None) -> dict:
         if not self.loaded:
             raise ModelNotLoaded(self.load_error)
+        crop = self.crop_key(crop)
 
         images = [decode(data) for data in images_bytes]
         size, mean, std = self.bundle.image_size, self.bundle.mean, self.bundle.std
@@ -145,6 +168,8 @@ class Predictor:
                       "calibrated": self.calibration.get("alpha") is not None},
             "severity": None,
             "explanation": None,
+            "selectedCrop": crop,
+            "reason": None,
         }
 
         if not passed:
@@ -155,6 +180,10 @@ class Predictor:
 
         # Several photos of the same plant: average their probabilities
         combined = probs[passed].mean(axis=0)
+        if crop:
+            # The farmer named the crop: only that crop's classes can be the answer
+            mask = np.array([self.taxonomy[c].crop == crop for c in self.bundle.class_ids], dtype=float)
+            combined = combined * mask / (combined * mask).sum()
         decision = decide(combined, self.calibration["qhat"])
         best = int(combined.argmax())
         shown = decision.set_indices or [int(i) for i in np.argsort(-combined)[:3]]
@@ -170,7 +199,8 @@ class Predictor:
 
         first = passed[0]
         severity_mask = None
-        if with_severity and self.severity and decision.status != "unknown" and not best_class.healthy:
+        # Severity only for diseases that leave lesions (not viruses, mites or insect damage)
+        if self.severity and decision.status != "unknown" and best_class.lesions and (with_severity or self.min_lesion_percent):
             estimates = [self.severity.estimate(images[i]) for i in passed]
             severity_mask = estimates[0].pop("_lesion_mask")
             for estimate in estimates[1:]:
@@ -180,6 +210,19 @@ class Predictor:
             response["severity"] = {"percent": round(percent, 1), "grade": grade.grade, "label": grade.label,
                                     "leafAreaFound": all(e["leafAreaFound"] for e in estimates),
                                     "perImage": [e["percent"] for e in estimates]}
+
+            # Lesion cross-check: a spot/blight/rust diagnosis with almost no lesions on the leaf is not
+            # trusted (e.g. insect holes read as brown spot). Threshold chosen with evaluate_checks.py.
+            if self.min_lesion_percent and percent < self.min_lesion_percent:
+                response.update({
+                    "status": "unknown",
+                    "reason": "no_lesions",
+                    "message": ("No disease spots were found on this leaf, so it does not look like a disease the model "
+                                "knows. It may be insect damage, a nutrient problem or something else: please ask an "
+                                "agricultural expert or your nearest Krishi Vigyan Kendra."),
+                })
+            if not with_severity:
+                response["severity"] = None
 
         if explain:
             with self._lock:

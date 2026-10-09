@@ -15,7 +15,7 @@ const PHASES = [
 
 // Looping mock scan in the hero, built from the model's real output on a sample photo
 function HeroDemo() {
-  const { t, cropName } = usePreferences();
+  const { t, cropName, diseaseName } = usePreferences();
   const reduceMotion = useReducedMotion();
   const [phase, setPhase] = useState(reduceMotion ? 2 : 0);
 
@@ -112,7 +112,7 @@ function HeroDemo() {
                   value={candidate.confidence}
                   tone={index === 0 ? "warning" : "neutral"}
                   size="sm"
-                  label={`${cropName(candidate.crop)} – ${candidate.disease}`}
+                  label={`${cropName(candidate.crop)} – ${diseaseName(candidate.disease)}`}
                 />
               ))}
             </div>

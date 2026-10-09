@@ -33,7 +33,9 @@ tests/                end-to-end tests on a tiny synthetic dataset (CPU, ~15 s)
 1. **Gate.** Each photo must look like something the model knows:
    - energy score of the logits must be below a threshold learnt during calibration;
    - optionally (`CROPCARE_GATE=bioclip`) BioCLIP must agree it is a leaf of a supported crop.
-     In testing, real PlantDoc leaves scored 0.44–0.98 and non-plant images < 0.01.
+     **Not enabled by default:** on 684 real field leaves, 10% scored below 0.02, overlapping the
+     0.001–0.003 of junk images, so any useful cut-off rejected ~8% of genuine farmer photos.
+     The energy gate alone passed 99% of real leaves and rejected 6 of 7 synthetic junk images.
 2. **Several photos** of one plant: their calibrated probabilities are averaged.
 3. **Temperature scaling** makes the probabilities honest (fit on held-out photos).
 4. **Conformal prediction (LAC)** gives the set of diseases that contains the true one ~90% of the
@@ -77,7 +79,12 @@ python -m cropcare_ai.training.evaluate --manifest data/manifests/plantdoc.csv -
 python -m cropcare_ai.training.evaluate --manifest data/manifests/field.csv --name field_test --description "Our field photos"
 python -m cropcare_ai.training.report --model-dir artifacts/exp_a_pv_only_mobilenetv3 artifacts/classifier
 
-# 4. Severity model (PlantSeg COCO annotations) and offline export
+# 4. Phone model for offline mode (writes frontend/public/model/; checks accuracy on field photos)
+python -m cropcare_ai.training.export_onnx --model-dir artifacts/c_mobilenetv3
+python -m cropcare_ai.training.export_web --model-dir artifacts/c_mobilenetv3 --check data/manifests/plantdoc.csv --check data/manifests/plantwild.csv
+#    float32 is shipped: int8 lost too much field accuracy (dynamic 22%, static 51% vs 62.5%)
+
+# 5. Severity model (PlantSeg COCO annotations) and offline export
 python -m cropcare_ai.training.train_segmenter --train-coco ... --train-images ... --val-coco ... --val-images ...
 python -m cropcare_ai.training.export_onnx
 ```
@@ -99,9 +106,30 @@ Settings (environment variables or `ai-service/.env`):
 | `CROPCARE_CLASSIFIER_DIR` | `artifacts/classifier` |
 | `CROPCARE_SEVERITY_DIR` | `artifacts/severity` (optional; no severity if missing) |
 | `CROPCARE_GATE` | `energy`; `bioclip` adds the BioCLIP check (`pip install open_clip_torch`, ~600 MB download); `off` disables |
-| `CROPCARE_BIOCLIP_THRESHOLD` | `0.3` |
+| `CROPCARE_BIOCLIP_THRESHOLD` | `0.05`; overridden by the threshold learnt with `calibrate --bioclip` |
 | `CROPCARE_DEVICE` | `cpu` |
 | `CROPCARE_PORT` | `8000` |
+| `CROPCARE_TRANSLATION_ENABLED` | `true`; `false` turns off `POST /translate` |
+| `CROPCARE_TRANSLATION_MODEL` | `facebook/nllb-200-distilled-600M` |
+| `CROPCARE_TRANSLATION_BEAMS` | `2` (1 = faster, 4 = slightly better) |
+
+## Hindi translation (`POST /translate`)
+
+The backend sends advice text here when the app is in Hindi. Meta's NLLB-200 (distilled 600M,
+CC-BY-NC 4.0, no login) runs on this machine: no account, API key or per-request cost. It loads on
+the first request (first time ever: ~2.5 GB download into the Hugging Face cache, a few minutes)
+and needs ~2.5 GB RAM while loaded; on a laptop CPU it translates about one sentence per second.
+The backend stores every translation in MySQL, so each sentence is translated only once.
+
+A general model gets farming words wrong ("whorl" became "horse rider", "caterpillars" became
+"vultures"), so `configs/glossary_hi.yaml` swaps in the correct Hindi term first, and texts are
+translated one sentence at a time. To fix a wrong word: add it to the glossary, restart, and
+delete the cached rows (`DELETE FROM translations;` in MySQL).
+
+```bash
+curl -X POST http://127.0.0.1:8000/translate -H "Content-Type: application/json" \
+     -d '{"texts": ["Install pheromone traps to monitor the moths"], "target": "hi"}'
+```
 
 ## Adding a crop or disease
 

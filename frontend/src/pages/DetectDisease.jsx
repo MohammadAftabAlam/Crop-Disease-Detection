@@ -11,8 +11,13 @@ import {
   MapPin,
   ScanLine,
   Sparkles,
+  WifiOff,
 } from "lucide-react";
 import ImageUploader from "../components/ImageUploader";
+import OfflineModeCard from "../components/OfflineModeCard";
+import { useOfflineModel, useOnlineStatus } from "../hooks/useOffline";
+import { diagnoseOffline } from "../offline/model";
+import { addPendingScan } from "../offline/queue";
 import { Alert, Badge, Button, Card, PageHeader, SectionTitle, cx, fadeUp, stagger } from "../components/ui";
 import { predictDisease } from "../services/predictionService";
 import { getCurrentLocation } from "../services/weatherService";
@@ -101,6 +106,36 @@ function ScanningOverlay({ files }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// Optional: which crop the photos show (limits the answer to that crop's diseases)
+function CropPicker({ crops, value, onChange }) {
+  const { t, cropName } = usePreferences();
+  const options = [{ value: "", label: t("scan.anyCrop") }, ...crops.map((c) => ({ value: c.toLowerCase(), label: cropName(c) }))];
+
+  return (
+    <div className="rounded-xl bg-surface-2 p-4 ring-1 ring-inset ring-border">
+      <p className="font-semibold text-fg">{t("scan.cropTitle")}</p>
+      <p className="mt-0.5 text-sm text-muted">{t("scan.cropHint")}</p>
+      <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label={t("scan.cropTitle")}>
+        {options.map((option) => (
+          <button
+            key={option.value || "any"}
+            type="button"
+            role="radio"
+            aria-checked={value === option.value}
+            onClick={() => onChange(option.value)}
+            className={cx(
+              "rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 ring-inset transition-colors",
+              value === option.value ? "bg-primary text-primary-fg ring-primary" : "text-muted ring-border hover:text-fg"
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -207,6 +242,10 @@ function PhotoTips() {
         </ul>
       </Card>
 
+      <motion.div variants={fadeUp}>
+        <OfflineModeCard compact />
+      </motion.div>
+
       <Card as={motion.div} variants={fadeUp} className="p-5">
         <SectionTitle icon={Sparkles}>{t("tips.supported")}</SectionTitle>
         <div className="flex flex-wrap gap-2">
@@ -224,15 +263,33 @@ function DetectDisease() {
   const navigate = useNavigate();
   const { t } = usePreferences();
   const modelInfo = useModelInfo();
+  const online = useOnlineStatus();
+  const { ready: offlineReady } = useOfflineModel();
 
   const [files, setFiles] = useState([]);
   const [location, setLocation] = useState(null);
+  const [crop, setCrop] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleImagesChange = (nextFiles) => {
     setFiles(nextFiles);
     setError("");
+  };
+
+  // No internet (or the server is unreachable): check on the phone if the offline model is
+  // downloaded, and save the photos so they get the full analysis later
+  const runOffline = async () => {
+    let result = null;
+    if (offlineReady) {
+      try {
+        result = await diagnoseOffline(files, crop || null);
+      } catch {
+        result = null;
+      }
+    }
+    const scanId = await addPendingScan({ files, location, result });
+    navigate("/offline-result", { state: { result, scanId } });
   };
 
   const handleDetection = async () => {
@@ -244,16 +301,27 @@ function DetectDisease() {
     setLoading(true);
     setError("");
 
+    if (!online) {
+      await runOffline();
+      return;
+    }
+
     try {
-      const { prediction } = await predictDisease(files, {
+      const { prediction, translation } = await predictDisease(files, {
         lat: location?.lat,
         lon: location?.lon,
         explain: true,
+        crop: crop || undefined,
       });
 
       // Grad-CAM images are not stored, so the result travels with the navigation
-      navigate(`/result/${prediction.id}`, { state: { prediction } });
+      navigate(`/result/${prediction.id}`, { state: { prediction, translation } });
     } catch (err) {
+      if (!err.response) {
+        // Network error: the server cannot be reached
+        await runOffline();
+        return;
+      }
       setError(err.response?.data?.message || t("scan.failed"));
       setLoading(false);
     }
@@ -263,7 +331,13 @@ function DetectDisease() {
     <>
       <PageHeader eyebrow={t("scan.eyebrow")} title={t("scan.title")} description={t("scan.description")} />
 
-      {modelInfo && !modelInfo.modelLoaded && (
+      {!online && (
+        <Alert tone="info" icon={WifiOff} title={t("offline.youAreOffline")} className="mb-6">
+          {offlineReady ? t("offline.offlineScanHint") : t("offline.noModelHint")}
+        </Alert>
+      )}
+
+      {online && modelInfo && !modelInfo.modelLoaded && (
         <Alert tone="warning" icon={CircleAlert} title={t("scan.modelOffline")} className="mb-6">
           {t("scan.modelOfflineText")}
         </Alert>
@@ -273,7 +347,8 @@ function DetectDisease() {
         <Card className="relative p-5 sm:p-6">
           <ImageUploader onImagesChange={handleImagesChange} />
 
-          <div className="mt-6">
+          <div className="mt-6 space-y-4">
+            <CropPicker crops={modelInfo?.crops?.length ? modelInfo.crops : SUPPORTED_CROPS} value={crop} onChange={setCrop} />
             <LocationOption location={location} onChange={setLocation} />
           </div>
 
@@ -290,7 +365,9 @@ function DetectDisease() {
             disabled={files.length === 0 || loading}
             className="mt-6 w-full"
           >
-            {files.length > 1 ? t("scan.analyzeMany", { count: files.length }) : t("scan.analyze")}
+            {!online
+              ? t(offlineReady ? "offline.checkOffline" : "offline.saveForLater")
+              : files.length > 1 ? t("scan.analyzeMany", { count: files.length }) : t("scan.analyze")}
           </Button>
 
           <AnimatePresence>{loading && <ScanningOverlay files={files} />}</AnimatePresence>

@@ -1,28 +1,68 @@
-"""Export the classifier to ONNX (and an int8 version) for offline use in the browser or on a phone.
+"""Export the classifier to ONNX (and optionally a smaller int8 version) for offline use.
 
-  python -m cropcare_ai.training.export_onnx
+  python -m cropcare_ai.training.export_onnx --model-dir artifacts/c_mobilenetv3
+  python -m cropcare_ai.training.export_onnx --model-dir artifacts/c_mobilenetv3 \\
+      --int8-calibration data/manifests/plantdoc.csv --int8-calibration data/manifests/plantwild.csv
 
-Writes model.onnx and model.int8.onnx into the model folder and checks that
-ONNX Runtime gives the same answer as PyTorch.
+model.onnx       float32, checked against PyTorch
+model.int8.onnx  static int8 (per-channel weights, QDQ), calibrated on real images. Only made when
+                 --int8-calibration is given. Dynamic int8 is NOT used: on MobileNetV3 it dropped
+                 field accuracy from 62.5% to 22%. Always check an int8 model with export_web --check.
 """
 
 from __future__ import annotations
 
 import argparse
+import random
 
 import numpy as np
 import torch
 
+from cropcare_ai.data.datasets import load_rgb
+from cropcare_ai.data.manifest import read_manifest, select
+from cropcare_ai.inference.imaging import to_tensor
 from cropcare_ai.models.bundle import load_classifier, read_json, write_json
 from cropcare_ai.settings import get_settings
 from cropcare_ai.training.common import resolve_path
+
+
+def quantize_static_int8(onnx_path, int8_path, bundle, manifests: list[str], split: str, limit: int) -> int:
+    from onnxruntime.quantization import CalibrationDataReader, QuantFormat, QuantType, quantize_static
+    from onnxruntime.quantization.shape_inference import quant_pre_process
+
+    index = set(bundle.class_ids)
+    rows = [r for m in manifests for r in select(read_manifest(resolve_path(m)), split) if r.class_id in index]
+    random.Random(0).shuffle(rows)
+    rows = rows[:limit]
+
+    class Reader(CalibrationDataReader):
+        def __init__(self):
+            self.items = iter(rows)
+
+        def get_next(self):
+            row = next(self.items, None)
+            if row is None:
+                return None
+            x = to_tensor(load_rgb(row.path), bundle.image_size, bundle.mean, bundle.std)[None].numpy()
+            return {"image": x}
+
+    prepared = onnx_path.with_name("model.prep.onnx")
+    quant_pre_process(str(onnx_path), str(prepared))
+    quantize_static(str(prepared), str(int8_path), Reader(), quant_format=QuantFormat.QDQ, per_channel=True,
+                    weight_type=QuantType.QInt8, activation_type=QuantType.QUInt8)
+    prepared.unlink(missing_ok=True)
+    return len(rows)
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--model-dir", default=str(get_settings().classifier_dir))
     parser.add_argument("--opset", type=int, default=17)
-    parser.add_argument("--skip-int8", action="store_true")
+    parser.add_argument("--int8-calibration", action="append", default=[],
+                        help="Manifest(s) of real photos to calibrate int8 quantization on")
+    parser.add_argument("--int8-split", default="val")
+    parser.add_argument("--int8-images", type=int, default=300)
+    parser.add_argument("--skip-int8", action="store_true", help="(kept for old commands) same as giving no calibration")
     args = parser.parse_args(argv)
 
     import onnxruntime as ort
@@ -44,15 +84,13 @@ def main(argv: list[str] | None = None) -> None:
     print(f"ONNX export OK ({onnx_path.stat().st_size / 1e6:.1f} MB), max difference vs PyTorch {max_diff:.2e}")
 
     info = {"fp32": {"file": "model.onnx", "max_abs_diff": max_diff, "mb": onnx_path.stat().st_size / 1e6}}
-    if not args.skip_int8:
-        from onnxruntime.quantization import QuantType, quantize_dynamic
-
+    if args.int8_calibration and not args.skip_int8:
         int8_path = model_dir / "model.int8.onnx"
-        quantize_dynamic(str(onnx_path), str(int8_path), weight_type=QuantType.QUInt8)
-        int8 = ort.InferenceSession(str(int8_path), providers=["CPUExecutionProvider"]).run(None, {"image": dummy.numpy()})[0]
-        same_top1 = bool(int8.argmax() == expected.argmax())
-        info["int8"] = {"file": "model.int8.onnx", "mb": int8_path.stat().st_size / 1e6, "same_top1_on_check": same_top1}
-        print(f"int8 model {info['int8']['mb']:.1f} MB (same top-1 on check image: {same_top1})")
+        used = quantize_static_int8(onnx_path, int8_path, bundle, args.int8_calibration, args.int8_split, args.int8_images)
+        info["int8"] = {"file": "model.int8.onnx", "mb": int8_path.stat().st_size / 1e6, "method": "static QDQ, per-channel",
+                        "calibration_images": used, "calibration_sources": args.int8_calibration}
+        print(f"int8 model {info['int8']['mb']:.1f} MB, calibrated on {used} images. Check it: "
+              f"python -m cropcare_ai.training.export_web --model-dir {args.model_dir} --check <manifest>")
 
     export = {**info, "class_ids": bundle.class_ids, "image_size": bundle.image_size,
               "mean": list(bundle.mean), "std": list(bundle.std),

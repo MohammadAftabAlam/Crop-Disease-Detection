@@ -28,9 +28,15 @@ public class AdvisoryService {
             "Send 2-3 photos of different affected leaves of the same plant");
 
     /** Inputs from a prediction. Severity grade and weather level may be null. */
-    public record Context(String status, String classId, List<String> candidateClassIds, Integer severityGrade,
-            String weatherRiskLevel) {
+    public record Context(String status, String reason, String classId, List<String> candidateClassIds,
+            Integer severityGrade, String weatherRiskLevel) {
     }
+
+    static final List<String> NO_LESION_CHECKS = List.of(
+            "Look at both sides of the leaves and inside the leaf whorl for caterpillars, beetles, eggs or droppings",
+            "Holes, torn edges or scraped white streaks usually mean insect feeding, not a disease",
+            "Uniform yellowing or purple colour can mean a nutrient problem rather than a disease",
+            "Photograph one damaged leaf up close and show it to your agriculture officer");
 
     private final DiseaseService diseaseService;
 
@@ -42,13 +48,23 @@ public class AdvisoryService {
         return switch (context.status()) {
             case "confident" -> confident(context);
             case "ambiguous" -> ambiguous(context);
+            case "unknown" -> "no_lesions".equals(context.reason())
+                    ? new Advice("No disease spots found", "UNKNOWN",
+                            "This does not look like a disease the model knows.", NO_LESION_CHECKS, List.of(), List.of(),
+                            "Do not spray a fungicide: it will not help with insect damage or nutrient problems.",
+                            List.of(), null, HELPLINE, List.of(), DISCLAIMER)
+                    : unknown();
             case "rejected" -> new Advice("Photo not recognised as a supported crop leaf", "UNKNOWN",
                     "No diagnosis was made.", RETAKE_TIPS, List.of(), List.of(), null, List.of(), null, HELPLINE,
                     List.of(), DISCLAIMER);
-            default -> new Advice("The disease could not be identified reliably", "UNKNOWN",
-                    "Do not spray anything until the problem is identified.", RETAKE_TIPS, List.of(), List.of(), null,
-                    List.of(), null, HELPLINE, List.of(), DISCLAIMER);
+            default -> unknown();
         };
+    }
+
+    private static Advice unknown() {
+        return new Advice("The disease could not be identified reliably", "UNKNOWN",
+                "Do not spray anything until the problem is identified.", RETAKE_TIPS, List.of(), List.of(), null,
+                List.of(), null, HELPLINE, List.of(), DISCLAIMER);
     }
 
     private Advice confident(Context context) {
