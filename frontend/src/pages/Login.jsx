@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Link, Navigate, useLocation } from "react-router-dom";
-import { CircleAlert, LogIn, Sprout } from "lucide-react";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { CircleAlert, LogIn } from "lucide-react";
 import AuthHeader from "../components/AuthHeader";
 import PasswordField, { TextField } from "../components/PasswordField";
 import { Alert, Button } from "../components/ui";
@@ -12,6 +12,7 @@ function Login() {
   const { user, login } = useAuth();
   const { t } = usePreferences();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -45,14 +46,22 @@ function Login() {
       const data = await loginUser({ email, password });
       login(data.user, data.token);
     } catch (err) {
-      setError(err.response?.data?.message || t("auth.loginFailed"));
+      const data = err.response?.data;
+      if (data?.code === "EMAIL_NOT_VERIFIED") {
+        // Right password, email never verified: a fresh code was sent, go and enter it
+        navigate(`/verify-email?email=${encodeURIComponent(data.email)}`, {
+          state: { email: data.email, resendAfterSeconds: data.resendAfterSeconds, message: data.message },
+        });
+        return;
+      }
+      setError(data?.message || t("auth.loginFailed"));
       setLoading(false);
     }
   };
 
   return (
     <>
-      <AuthHeader icon={Sprout} title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")} />
+      <AuthHeader logo title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")} />
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <TextField

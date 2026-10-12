@@ -36,14 +36,14 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Runs the real BhashiniClient against a local fake Bhashini that speaks the same JSON:
- * config call (userID + ulcaApiKey headers) -> callbackUrl + inference key + serviceId,
- * then compute call -> pipelineResponse[0].output[].target. The fake "translates" by prefixing "हिं: ".
+ * Runs the real GoogleTranslateClient against a local fake that speaks the same
+ * Google Cloud Translation API v2 JSON: POST /language/translate/v2?key=...
+ * returns {"data":{"translations":[{"translatedText":"हिं: ..."}]}}.
+ * The fake "translates" by prefixing "हिं: ".
  */
 class TranslationIntegrationTest extends IntegrationTestBase {
 
     static final HttpServer FAKE;
-    static final AtomicInteger CONFIG_CALLS = new AtomicInteger();
     static final AtomicInteger TEXTS_TRANSLATED = new AtomicInteger();
     static final AtomicBoolean DOWN = new AtomicBoolean(false);
     static final List<String> PROBLEMS = new ArrayList<>();
@@ -55,17 +55,15 @@ class TranslationIntegrationTest extends IntegrationTestBase {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-        FAKE.createContext("/config", TranslationIntegrationTest::config);
-        FAKE.createContext("/compute", TranslationIntegrationTest::compute);
+        FAKE.createContext("/language/translate/v2", TranslationIntegrationTest::translate);
         FAKE.start();
     }
 
     @DynamicPropertySource
-    static void bhashini(DynamicPropertyRegistry registry) {
+    static void googleTranslate(DynamicPropertyRegistry registry) {
         String base = "http://127.0.0.1:" + FAKE.getAddress().getPort();
-        registry.add("app.bhashini.user-id", () -> "test-user");
-        registry.add("app.bhashini.api-key", () -> "test-ulca-key");
-        registry.add("app.bhashini.config-url", () -> base + "/config");
+        registry.add("app.google-translate.api-key", () -> "test-google-key");
+        registry.add("app.google-translate.base-url", () -> base);
     }
 
     @AfterAll
@@ -82,45 +80,26 @@ class TranslationIntegrationTest extends IntegrationTestBase {
         PROBLEMS.clear();
     }
 
-    private static void config(HttpExchange exchange) throws IOException {
-        JsonNode body = JSON.readTree(exchange.getRequestBody());
-        if (!"test-user".equals(exchange.getRequestHeaders().getFirst("userID"))
-                || !"test-ulca-key".equals(exchange.getRequestHeaders().getFirst("ulcaApiKey"))) {
-            PROBLEMS.add("config call without userID/ulcaApiKey headers");
-        }
-        if (!"64392f96daac500b55c543cd".equals(body.at("/pipelineRequestConfig/pipelineId").asString())) {
-            PROBLEMS.add("wrong pipelineId");
-        }
-        CONFIG_CALLS.incrementAndGet();
-        String port = String.valueOf(FAKE.getAddress().getPort());
-        reply(exchange, 200, """
-                {"pipelineResponseConfig":[{"taskType":"translation","config":[
-                   {"serviceId":"en-to-ta","language":{"sourceLanguage":"en","targetLanguage":"ta"}},
-                   {"serviceId":"en-to-hi-model","language":{"sourceLanguage":"en","targetLanguage":"hi"}}]}],
-                 "pipelineInferenceAPIEndPoint":{"callbackUrl":"http://127.0.0.1:%s/compute",
-                   "inferenceApiKey":{"name":"Authorization","value":"inference-secret"}}}""".formatted(port));
-    }
-
-    private static void compute(HttpExchange exchange) throws IOException {
+    private static void translate(HttpExchange exchange) throws IOException {
         if (DOWN.get()) {
             reply(exchange, 500, "{}");
             return;
         }
+        // Check the API key is passed as a query parameter
+        String query = exchange.getRequestURI().getQuery();
+        if (query == null || !query.contains("key=test-google-key")) {
+            PROBLEMS.add("translate call without API key");
+        }
+
         JsonNode body = JSON.readTree(exchange.getRequestBody());
-        if (!"inference-secret".equals(exchange.getRequestHeaders().getFirst("Authorization"))) {
-            PROBLEMS.add("compute call without inference key");
-        }
-        if (!"en-to-hi-model".equals(body.at("/pipelineTasks/0/config/serviceId").asString())) {
-            PROBLEMS.add("compute call used the wrong serviceId");
-        }
-        List<String> outputs = new ArrayList<>();
-        for (JsonNode input : body.at("/inputData/input")) {
-            String source = input.get("source").asString();
+        JsonNode qArray = body.get("q");
+        List<String> items = new ArrayList<>();
+        for (JsonNode item : qArray) {
+            String source = item.asString();
             TEXTS_TRANSLATED.incrementAndGet();
-            outputs.add("{\"source\":" + JSON.writeValueAsString(source) + ",\"target\":"
-                    + JSON.writeValueAsString("हिं: " + source) + "}");
+            items.add("{\"translatedText\":" + JSON.writeValueAsString("हिं: " + source) + "}");
         }
-        reply(exchange, 200, "{\"pipelineResponse\":[{\"taskType\":\"translation\",\"output\":[" + String.join(",", outputs) + "]}]}");
+        reply(exchange, 200, "{\"data\":{\"translations\":[" + String.join(",", items) + "]}}");
     }
 
     private static void reply(HttpExchange exchange, int status, String json) throws IOException {
@@ -155,7 +134,7 @@ class TranslationIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.translation.language").value("hi"))
                 .andExpect(jsonPath("$.translation.applied").value(true))
-                .andExpect(jsonPath("$.translation.provider").value("Bhashini"))
+                .andExpect(jsonPath("$.translation.provider").value("Google Translate"))
                 .andExpect(jsonPath("$.prediction.advice.immediateActions[0]").value(startsWith("हिं: ")))
                 .andExpect(jsonPath("$.prediction.advice.disclaimer").value(startsWith("हिं: ")))
                 .andExpect(jsonPath("$.prediction.advice.urgency").value("MODERATE"))           // codes stay as they are
@@ -168,7 +147,6 @@ class TranslationIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.prediction.advice.immediateActions[0]").value(startsWith("हिं: ")));
         assertThat(TEXTS_TRANSLATED.get() - before).isEqualTo(firstTime);
         assertThat(translations.count()).isGreaterThanOrEqualTo(firstTime);
-        assertThat(CONFIG_CALLS.get()).isEqualTo(1);   // config cached for an hour
         assertThat(PROBLEMS).isEmpty();
     }
 
@@ -184,12 +162,12 @@ class TranslationIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void whenBhashiniFailsTheAppShowsEnglishInsteadOfAnError() throws Exception {
+    void whenGoogleTranslateFailsTheAppShowsEnglishInsteadOfAnError() throws Exception {
         String token = register(uniqueEmail());
         Integer id = scan(token);
         DOWN.set(true);
 
-        // Rice text has not been translated by the other tests, so it must hit (the failing) Bhashini
+        // Rice text has not been translated by the other tests, so it must hit (the failing) Google
         mvc.perform(get("/api/diseases/crop/rice").header("Accept-Language", "hi"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.translation.applied").value(false))

@@ -186,7 +186,9 @@ function PublicShell() {
   }, [pathname, hash]);
 
   return (
-    <div className="relative isolate flex min-h-screen flex-col">
+    // overflow-x-clip: decorative glows must never widen the page on phones
+    // (clip, unlike hidden, keeps the sticky navigation working)
+    <div className="relative isolate flex min-h-screen flex-col overflow-x-clip">
       <Backdrop />
       <PublicNav />
       <main className="flex-1">

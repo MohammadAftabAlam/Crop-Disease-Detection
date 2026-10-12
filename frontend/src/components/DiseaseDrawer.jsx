@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import {
   Bug,
@@ -15,23 +15,8 @@ import {
 } from "lucide-react";
 import { Alert, Badge } from "./ui";
 import usePreferences from "../hooks/usePreferences";
+import useIsDesktop from "../hooks/useIsDesktop";
 import { pathogenType } from "../utils/prediction";
-
-const DESKTOP = "(min-width: 1024px)";
-
-const useIsDesktop = () => {
-  const [matches, setMatches] = useState(() => window.matchMedia(DESKTOP).matches);
-
-  useEffect(() => {
-    const query = window.matchMedia(DESKTOP);
-    const update = () => setMatches(query.matches);
-
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-
-  return matches;
-};
 
 function Section({ icon: Icon, title, items }) {
   if (!items?.length) {

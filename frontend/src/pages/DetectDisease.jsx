@@ -32,18 +32,27 @@ function ScanningOverlay({ files }) {
   const { t } = usePreferences();
   const [step, setStep] = useState(0);
 
-  const [preview, setPreview] = useState(null);
+  // All photos are analysed together, so the animation goes through every one of them
+  const [previews, setPreviews] = useState([]);
+  const [shown, setShown] = useState(0);
 
   useEffect(() => {
-    if (!files[0]) {
+    const urls = files.map((file) => URL.createObjectURL(file));
+    setPreviews(urls);
+    setShown(0);
+
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [files]);
+
+  useEffect(() => {
+    if (previews.length < 2) {
       return undefined;
     }
+    const timer = setInterval(() => setShown((current) => (current + 1) % previews.length), 1200);
+    return () => clearInterval(timer);
+  }, [previews.length]);
 
-    const url = URL.createObjectURL(files[0]);
-    setPreview(url);
-
-    return () => URL.revokeObjectURL(url);
-  }, [files]);
+  const preview = previews[shown];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -63,7 +72,20 @@ function ScanningOverlay({ files }) {
       aria-live="polite"
     >
       <div className="relative size-44 overflow-hidden rounded-2xl ring-1 ring-primary/40 glow sm:size-52">
-        {preview && <img src={preview} alt="" className="size-full object-cover" />}
+        <AnimatePresence mode="popLayout">
+          {preview && (
+            <motion.img
+              key={preview}
+              src={preview}
+              alt=""
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 size-full object-cover"
+            />
+          )}
+        </AnimatePresence>
         <div className="absolute inset-0 bg-primary/10" />
 
         {/* Sweeping scan line */}
@@ -83,6 +105,11 @@ function ScanningOverlay({ files }) {
 
       <div className="w-full max-w-xs text-center">
         <p className="text-lg font-bold text-fg">{t("scan.analyzing")}</p>
+        {previews.length > 1 && (
+          <p className="mt-1 text-sm text-muted tabular">
+            {t("scan.photoOf", { n: shown + 1, total: previews.length })}
+          </p>
+        )}
 
         <div className="mt-4 space-y-2 text-left">
           {SCAN_STEPS.map((key, index) => (
@@ -343,7 +370,7 @@ function DetectDisease() {
         </Alert>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card className="relative p-5 sm:p-6">
           <ImageUploader onImagesChange={handleImagesChange} />
 

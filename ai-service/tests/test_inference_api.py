@@ -37,6 +37,24 @@ def test_multi_photo_uses_every_image(predictor):
     assert len(result["perImage"]) == 3
 
 
+def test_every_photo_gets_its_own_answer_and_heat_map(predictor):
+    same = predictor.predict([image_bytes(0, seed=1), image_bytes(0, seed=1)], explain=True)
+    if same["status"] == "rejected":
+        return
+    assert same["photosAgree"] is True
+    assert [p["index"] for p in same["perImage"]] == [0, 1]
+    assert all(p["used"] and p["top"]["classId"] for p in same["perImage"])
+    views = same["explanation"]["images"]
+    assert [v["imageIndex"] for v in views] == [0, 1]
+    assert all(v["heatmap"].startswith("data:image/jpeg;base64,") for v in views)
+    assert same["explanation"]["heatmap"] == views[0]["heatmap"]          # first photo also at the top level
+
+    # Photos of two different problems: the app is told they disagree
+    mixed = predictor.predict([image_bytes(0, seed=1), image_bytes(1, seed=1)])
+    tops = {p["top"]["classId"] for p in mixed["perImage"] if p["used"]}
+    assert mixed["photosAgree"] is (len(tops) <= 1)
+
+
 def test_severity_is_reported_for_diseased_predictions(predictor):
     result = predictor.predict([image_bytes(0)], explain=True)
     if result["status"] in ("confident", "ambiguous") and not result["isHealthy"]:

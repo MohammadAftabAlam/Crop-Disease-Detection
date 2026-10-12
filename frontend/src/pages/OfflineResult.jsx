@@ -152,7 +152,7 @@ function OfflineResult() {
       {result && result.status !== "rejected" && (
         <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-6">
           {treat && disease ? (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <SectionTitle icon={ListChecks}>{t("advice.now")}</SectionTitle>
                 <ul className="space-y-2 text-sm text-fg">{disease.remedies.map((r) => <li key={r}>• {r}</li>)}</ul>

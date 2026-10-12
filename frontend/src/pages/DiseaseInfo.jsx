@@ -170,7 +170,7 @@ function DiseaseInfo() {
       </Card>
 
       {loading ? (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2, 3, 4, 5].map((key) => (
             <Skeleton key={key} className="h-56 rounded-2xl" />
           ))}
@@ -185,7 +185,7 @@ function DiseaseInfo() {
           variants={stagger}
           initial="hidden"
           animate="show"
-          className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
         >
           {filtered.map((disease) => (
             <DiseaseTile key={disease.code} disease={disease} onOpen={() => updateParam("disease", disease.code)} />

@@ -5,38 +5,36 @@ import AuthImage from "../AuthImage";
 import { Alert, Card, Segmented, cx } from "../ui";
 import usePreferences from "../../hooks/usePreferences";
 
-// The uploaded photos, plus the Grad-CAM heat map and lesion overlay.
+// The uploaded photos, plus a Grad-CAM heat map and lesion overlay for each photo that was used.
 // The overlays are only returned right after a scan; they are not stored.
 function ExplanationView({ prediction }) {
   const { t } = usePreferences();
   const explanation = prediction.explanation;
   const photos = prediction.imageUrls || [];
 
+  // One entry per photo that was used (older responses only had the first photo's overlays)
+  const overlays = explanation
+    ? explanation.images || [{ imageIndex: explanation.imageIndex ?? 0, heatmap: explanation.heatmap, lesions: explanation.lesions }]
+    : [];
+  const overlayFor = (index) => overlays.find((overlay) => overlay.imageIndex === index);
+
   const [view, setView] = useState(explanation ? "heatmap" : "photo");
   const [photoIndex, setPhotoIndex] = useState(explanation?.imageIndex ?? 0);
+  const current = overlayFor(photoIndex);
 
   const views = [
     { value: "photo", label: t("explain.photo"), icon: ImageIcon },
-    ...(explanation?.heatmap ? [{ value: "heatmap", label: t("explain.heatmap"), icon: Flame }] : []),
-    ...(explanation?.lesions ? [{ value: "lesions", label: t("explain.lesions"), icon: ScanSearch }] : []),
+    ...(overlays.some((overlay) => overlay.heatmap) ? [{ value: "heatmap", label: t("explain.heatmap"), icon: Flame }] : []),
+    ...(overlays.some((overlay) => overlay.lesions) ? [{ value: "lesions", label: t("explain.lesions"), icon: ScanSearch }] : []),
   ];
 
-  const showPhoto = (index) => {
-    setPhotoIndex(index);
-    setView("photo");
-  };
-
-  const changeView = (next) => {
-    setView(next);
-
-    // The overlays were made from one particular photo
-    if (next !== "photo" && explanation) {
-      setPhotoIndex(explanation.imageIndex ?? 0);
-    }
-  };
+  // Switching photos keeps the chosen view (photo / heat map / lesions)
+  const showPhoto = (index) => setPhotoIndex(index);
+  const changeView = (next) => setView(next);
+  const overlayImage = view === "heatmap" ? current?.heatmap : view === "lesions" ? current?.lesions : null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
       <Card className="overflow-hidden p-4 sm:p-5">
         {views.length > 1 && (
           <Segmented options={views} value={view} onChange={changeView} layoutId="explain-view" className="mb-4" />
@@ -52,18 +50,29 @@ function ExplanationView({ prediction }) {
               transition={{ duration: 0.25 }}
               className="absolute inset-0"
             >
-              {view === "photo" && photos[photoIndex] ? (
+              {overlayImage ? (
+                <img
+                  src={overlayImage}
+                  alt={t(view === "heatmap" ? "explain.heatmapAlt" : "explain.lesionsAlt")}
+                  className="size-full object-contain"
+                />
+              ) : photos[photoIndex] ? (
                 <AuthImage src={photos[photoIndex]} alt={t("explain.photoAlt", { n: photoIndex + 1 })} className="size-full object-contain" />
-              ) : view === "heatmap" ? (
-                <img src={explanation.heatmap} alt={t("explain.heatmapAlt")} className="size-full object-contain" />
-              ) : view === "lesions" ? (
-                <img src={explanation.lesions} alt={t("explain.lesionsAlt")} className="size-full object-contain" />
               ) : null}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {view === "heatmap" && (
+        {photos.length > 1 && (
+          <p className="mt-3 text-sm font-semibold text-fg tabular">
+            {t("result.photoLabel", { n: photoIndex + 1 })}
+          </p>
+        )}
+        {view !== "photo" && !overlayImage && (
+          <p className="mt-2 text-sm text-muted">{t(current ? "explain.noLesionsHere" : "explain.noOverlay")}</p>
+        )}
+
+        {view === "heatmap" && overlayImage && (
           <div className="mt-4 flex items-center gap-3 text-xs text-muted">
             <span>{t("explain.less")}</span>
             {/* Same jet colour map the AI service draws with */}
@@ -72,7 +81,7 @@ function ExplanationView({ prediction }) {
           </div>
         )}
 
-        {view === "lesions" && (
+        {view === "lesions" && overlayImage && (
           <div className="mt-4 flex items-center gap-2 text-xs text-muted">
             <span className="size-3 rounded-sm bg-[#dc2626]" />
             {t("explain.lesionLegend")}
@@ -104,11 +113,15 @@ function ExplanationView({ prediction }) {
                   onClick={() => showPhoto(index)}
                   aria-label={t("explain.photoAlt", { n: index + 1 })}
                   className={cx(
-                    "aspect-square overflow-hidden rounded-lg ring-2 transition-all",
-                    view === "photo" && photoIndex === index ? "ring-primary" : "ring-transparent hover:ring-border"
+                    "relative aspect-square overflow-hidden rounded-lg ring-2 transition-all",
+                    photoIndex === index ? "ring-primary" : "ring-transparent hover:ring-border",
+                    explanation && !overlayFor(index) && "opacity-60"
                   )}
                 >
                   <AuthImage src={url} alt="" className="size-full" />
+                  <span className="absolute top-1 left-1 grid size-5 place-items-center rounded-full bg-black/60 text-[11px] font-bold text-white">
+                    {index + 1}
+                  </span>
                 </button>
               ))}
             </div>

@@ -12,6 +12,7 @@ import {
   MessageSquareHeart,
   ScanLine,
   ScanSearch,
+  Sparkles,
   Stethoscope,
   Target,
 } from "lucide-react";
@@ -22,7 +23,8 @@ import Tabs from "../components/Tabs";
 import AdviceView from "../components/result/AdviceView";
 import ExplanationView from "../components/result/ExplanationView";
 import FeedbackForm from "../components/result/FeedbackForm";
-import { Alert, Badge, Button, Card, EmptyState, SectionTitle, Skeleton, cx, fadeUp, stagger } from "../components/ui";
+import AssistantLauncher from "../components/assistant/AssistantLauncher";
+import { Alert, Badge, Button, Card, EmptyState, SectionTitle, Segmented, Skeleton, cx, fadeUp, stagger } from "../components/ui";
 import { getPredictionById } from "../services/predictionService";
 import usePreferences from "../hooks/usePreferences";
 import useModelInfo from "../hooks/useModelInfo";
@@ -130,14 +132,76 @@ function Summary({ prediction }) {
   );
 }
 
-function Overview({ prediction, onShowTab }) {
+// Several photos: what each one said on its own (the diagnosis is their average). When the photos
+// are of different plants, each card opens that photo's own result.
+function PhotoResults({ prediction, focus, onSelect }) {
+  const { t, cropName, diseaseName } = usePreferences();
+  const photos = prediction.photos || [];
+  const selectable = prediction.photosAgree === false;
+
+  return (
+    <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-6 lg:col-span-2">
+      <SectionTitle icon={Images}>{t("result.photosTitle", { count: photos.length })}</SectionTitle>
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {photos.map((photo) => {
+          const differs = photo.used && photo.classId && photo.classId !== prediction.classId;
+          const clickable = selectable && photo.used;
+          const selected = focus === photo.index;
+          const Item = clickable ? "button" : "div";
+          return (
+            <li key={photo.index}>
+              <Item
+                {...(clickable
+                  ? { type: "button", onClick: () => onSelect(selected ? null : photo.index), "aria-pressed": selected }
+                  : {})}
+                className={cx(
+                  "flex w-full items-center gap-3 rounded-xl p-2.5 text-left ring-inset transition-all",
+                  selected ? "bg-primary/10 ring-2 ring-primary" : "ring-1",
+                  !selected && (!photo.used ? "bg-surface-2 ring-border opacity-80" : differs ? "bg-warning/10 ring-warning/40" : "bg-surface-2 ring-border"),
+                  clickable && !selected && "hover:ring-primary/60"
+                )}
+              >
+              <div className="size-14 shrink-0 overflow-hidden rounded-lg bg-surface ring-1 ring-border">
+                {photo.imageUrl && <AuthImage src={photo.imageUrl} alt={t("explain.photoAlt", { n: photo.index + 1 })} className="size-full" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-subtle">{t("result.photoLabel", { n: photo.index + 1 })}</p>
+                {photo.used ? (
+                  <>
+                    <p className="truncate text-sm font-semibold text-fg">
+                      {cropName(photo.crop)} – {diseaseName(photo.disease)}
+                    </p>
+                    <p className="text-xs text-muted tabular">{Math.round(photo.confidence)}%</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted">{t("result.photoNotUsed")}</p>
+                )}
+              </div>
+              {clickable && (
+                <span className="shrink-0 text-xs font-semibold text-primary">
+                  {selected ? t("result.photoShowing") : t("result.photoOpen")}
+                </span>
+              )}
+              </Item>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-4 text-xs leading-relaxed text-muted">
+        {t(selectable ? "result.photosTapNote" : "result.photosNote")}
+      </p>
+    </Card>
+  );
+}
+
+function Overview({ prediction, scan, focus, onSelectPhoto, onShowTab, onAsk }) {
   const { t, cropName, diseaseName } = usePreferences();
   const tone = prediction.isHealthy ? "success" : statusInfo(prediction.status).tone;
   const candidates = prediction.candidates || [];
   const rejected = prediction.status === "rejected";
 
   return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="grid gap-5 lg:grid-cols-2">
+    <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-6">
         <SectionTitle icon={FileSearch}>{t("result.meaning")}</SectionTitle>
         <p className="text-sm leading-relaxed text-muted">
@@ -157,8 +221,15 @@ function Overview({ prediction, onShowTab }) {
               {t("result.seeWhy")}
             </Button>
           )}
+          {!rejected && (
+            <Button variant="ghost" icon={Sparkles} onClick={onAsk}>
+              {t("chat.open")}
+            </Button>
+          )}
         </div>
       </Card>
+
+      {(scan.photos || []).length > 1 && <PhotoResults prediction={scan} focus={focus} onSelect={onSelectPhoto} />}
 
       {candidates.length > 0 && (
         <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-6">
@@ -209,13 +280,68 @@ function Overview({ prediction, onShowTab }) {
   );
 }
 
+// One photo's own result, shaped like a whole scan so every tab can show it unchanged.
+// Only offered when the photos are of different plants (photosAgree === false).
+function photoView(scan, index) {
+  const photo = (scan.photos || []).find((item) => item.index === index);
+  if (!photo) {
+    return scan;
+  }
+  const overlay = scan.explanation?.images?.find((view) => view.imageIndex === index);
+  const heatmap = overlay ? overlay.photoHeatmap || overlay.heatmap : null;
+  return {
+    ...scan,
+    status: photo.status,
+    reason: photo.reason,
+    classId: photo.classId,
+    crop: photo.crop,
+    disease: photo.disease,
+    isHealthy: photo.disease === "Healthy",
+    confidence: photo.confidence,
+    candidates: photo.candidates || [],
+    severity: photo.severity,
+    advice: photo.advice,
+    weatherRisk: null,
+    imageUrls: photo.imageUrl ? [photo.imageUrl] : [],
+    explanation: overlay
+      ? { imageIndex: 0, heatmap, lesions: overlay.lesions, images: [{ imageIndex: 0, heatmap, lesions: overlay.lesions }] }
+      : null,
+    photos: [],
+    photosAgree: null,
+  };
+}
+
+// "Show the result for: All photos | Photo 1 | Photo 2", only for photos of different plants
+function PhotoSwitcher({ scan, focus, onChange }) {
+  const { t } = usePreferences();
+  const options = [
+    { value: "all", label: t("result.allPhotos") },
+    ...(scan.photos || [])
+      .filter((photo) => photo.used)
+      .map((photo) => ({ value: String(photo.index), label: t("result.photoLabel", { n: photo.index + 1 }) })),
+  ];
+
+  return (
+    <div className="mt-5 flex flex-wrap items-center gap-3">
+      <span className="text-sm font-semibold text-fg">{t("result.showFor")}</span>
+      <Segmented
+        options={options}
+        value={focus == null ? "all" : String(focus)}
+        onChange={(value) => onChange(value === "all" ? null : Number(value))}
+        layoutId="photo-focus"
+        className="max-w-full overflow-x-auto"
+      />
+    </div>
+  );
+}
+
 function ResultSkeleton() {
   return (
     <div className="space-y-6">
       <Skeleton className="h-6 w-32" />
       <Skeleton className="h-72 w-full rounded-2xl" />
       <Skeleton className="h-11 w-full max-w-md" />
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Skeleton className="h-48" />
         <Skeleton className="h-48" />
       </div>
@@ -236,6 +362,11 @@ function Result() {
   const [loadedLang, setLoadedLang] = useState(scanMatches ? lang : null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState("overview");
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  // Which photo is shown on its own (null = all photos combined)
+  const [focus, setFocus] = useState(null);
+
+  useEffect(() => setFocus(null), [id]);
 
   useEffect(() => {
     if (prediction && String(prediction.id) === id && loadedLang === lang) {
@@ -294,6 +425,9 @@ function Result() {
     return <ResultSkeleton />;
   }
 
+  const differentPlants = prediction.photosAgree === false;
+  const shown = differentPlants && focus != null ? photoView(prediction, focus) : prediction;
+
   const tabs = [
     { value: "overview", label: t("result.tabOverview"), icon: LayoutList },
     { value: "explain", label: t("result.tabExplain"), icon: ScanSearch },
@@ -310,9 +444,18 @@ function Result() {
         </Button>
       </div>
 
-      <Summary prediction={prediction} />
+      <Summary prediction={shown} />
 
-      {prediction.status === "ambiguous" && (
+      {differentPlants && (
+        <>
+          <Alert tone="warning" icon={Images} title={t("result.photosDisagree")} className="mt-5">
+            {t(focus == null ? "result.photosDisagreeText" : "result.photoFocusText", { n: (focus ?? 0) + 1 })}
+          </Alert>
+          <PhotoSwitcher scan={prediction} focus={focus} onChange={setFocus} />
+        </>
+      )}
+
+      {shown.status === "ambiguous" && (
         <Alert tone="warning" icon={statusInfo("ambiguous").icon} title={t("result.ambiguousWarning")} className="mt-5">
           {t("result.ambiguousWarningText")}
         </Alert>
@@ -324,21 +467,31 @@ function Result() {
         <div id="result-tab-panel" role="tabpanel" aria-labelledby={`result-tab-${tab}`} className="pt-6">
           <AnimatePresence mode="wait">
             <motion.div
-              key={tab}
+              key={`${tab}-${focus ?? "all"}`}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.2 }}
             >
-              {tab === "overview" && <Overview prediction={prediction} onShowTab={setTab} />}
-              {tab === "explain" && <ExplanationView prediction={prediction} />}
+              {tab === "overview" && (
+                <Overview
+                  prediction={shown}
+                  scan={prediction}
+                  focus={focus}
+                  onSelectPhoto={setFocus}
+                  onShowTab={setTab}
+                  onAsk={() => setAssistantOpen(true)}
+                />
+              )}
+              {tab === "explain" && <ExplanationView key={focus ?? "all"} prediction={shown} />}
               {tab === "treatment" && (
                 <AdviceView
-                  advice={prediction.advice}
-                  title={resultTitle(prediction, t, diseaseName)}
+                  key={focus ?? "all"}
+                  advice={shown.advice}
+                  title={resultTitle(shown, t, diseaseName)}
                   translation={translation}
-                  classId={prediction.classId}
-                  showLibraryLink={prediction.status === "confident" && !prediction.isHealthy}
+                  classId={shown.classId}
+                  showLibraryLink={shown.status === "confident" && !shown.isHealthy}
                 />
               )}
               {tab === "feedback" && <FeedbackForm prediction={prediction} onSaved={handleFeedbackSaved} />}
@@ -346,6 +499,13 @@ function Result() {
           </AnimatePresence>
         </div>
       </div>
+
+      <AssistantLauncher
+        prediction={prediction}
+        title={resultTitle(prediction, t, diseaseName)}
+        open={assistantOpen}
+        onOpenChange={setAssistantOpen}
+      />
     </>
   );
 }

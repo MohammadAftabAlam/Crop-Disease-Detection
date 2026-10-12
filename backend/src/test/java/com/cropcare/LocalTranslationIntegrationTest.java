@@ -31,7 +31,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * No Bhashini keys: the backend asks the AI service's POST /translate (here a local fake that
+ * No Google Translate key: the backend asks the AI service's POST /translate (here a local fake that
  * "translates" by prefixing "स्थानीय: ") and caches the result like any other translation.
  */
 class LocalTranslationIntegrationTest extends IntegrationTestBase {
@@ -56,8 +56,7 @@ class LocalTranslationIntegrationTest extends IntegrationTestBase {
     static void localTranslation(DynamicPropertyRegistry registry) {
         registry.add("app.ai-service-url", () -> "http://127.0.0.1:" + FAKE_AI.getAddress().getPort());
         registry.add("app.translation.local-enabled", () -> "true");
-        registry.add("app.bhashini.user-id", () -> "");
-        registry.add("app.bhashini.api-key", () -> "");
+        registry.add("app.google-translate.api-key", () -> "");
     }
 
     @AfterAll
@@ -103,7 +102,7 @@ class LocalTranslationIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    void withoutBhashiniKeysTheAiServiceTranslatesAndTheResultIsCached() throws Exception {
+    void withoutGoogleKeyTheAiServiceTranslatesAndTheResultIsCached() throws Exception {
         mvc.perform(get("/api/diseases/crop/potato").header("Accept-Language", "hi"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.translation.applied").value(true))

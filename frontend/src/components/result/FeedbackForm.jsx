@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { CircleAlert, CircleCheck, MessageSquareHeart, Send, ThumbsDown, ThumbsUp } from "lucide-react";
+import { CircleAlert, CircleCheck, Leaf, MessageSquareHeart, Send, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Alert, Button, Card, cx } from "../ui";
+import Select from "../Select";
 import { sendFeedback } from "../../services/predictionService";
 import useDiseases from "../../hooks/useDiseases";
 import usePreferences from "../../hooks/usePreferences";
@@ -37,6 +38,18 @@ function FeedbackForm({ prediction, onSaved }) {
       a === prediction.crop ? -1 : b === prediction.crop ? 1 : a.localeCompare(b)
     );
   }, [diseases, prediction.crop]);
+
+  // "Not sure" and "something else" first; then each crop's diseases under its heading
+  const diseaseOptions = useMemo(
+    () => [
+      { value: "", label: t("feedback.notSure") },
+      { value: "other", label: t("feedback.other") },
+      ...groups.flatMap(([crop, items]) =>
+        items.map((disease) => ({ value: disease.code, label: diseaseName(disease.diseaseName), group: cropName(crop) }))
+      ),
+    ],
+    [groups, t, cropName, diseaseName]
+  );
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -124,24 +137,15 @@ function FeedbackForm({ prediction, onSaved }) {
               <label htmlFor="actual-disease" className="mb-2 block text-sm font-semibold text-fg">
                 {t("feedback.actual")}
               </label>
-              <select
+              <Select
                 id="actual-disease"
                 value={actualClassId}
-                onChange={(event) => setActualClassId(event.target.value)}
-                className="h-11 w-full rounded-xl bg-surface-2 px-3 text-sm text-fg ring-1 ring-inset ring-border focus:ring-primary"
-              >
-                <option value="">{t("feedback.notSure")}</option>
-                {groups.map(([crop, items]) => (
-                  <optgroup key={crop} label={cropName(crop)}>
-                    {items.map((disease) => (
-                      <option key={disease.code} value={disease.code}>
-                        {cropName(disease.crop)} – {diseaseName(disease.diseaseName)}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-                <option value="other">{t("feedback.other")}</option>
-              </select>
+                onChange={setActualClassId}
+                options={diseaseOptions}
+                label={t("feedback.actual")}
+                icon={Leaf}
+                searchable
+              />
             </motion.div>
           )}
         </AnimatePresence>

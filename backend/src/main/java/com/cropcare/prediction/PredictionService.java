@@ -3,7 +3,9 @@ package com.cropcare.prediction;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -35,6 +37,7 @@ public class PredictionService {
     private final UserRepository users;
     private final AiClient aiClient;
     private final ImageStorage imageStorage;
+    private final CloudinaryClient cloudinary;
     private final AdvisoryService advisoryService;
     private final WeatherRiskService weatherRiskService;
     private final DiseaseService diseaseService;
@@ -45,8 +48,9 @@ public class PredictionService {
     }
 
     public PredictionService(PredictionRepository predictions, UserRepository users, AiClient aiClient,
-            ImageStorage imageStorage, AdvisoryService advisoryService, WeatherRiskService weatherRiskService,
-            DiseaseService diseaseService, Localizer localizer) {
+            ImageStorage imageStorage, CloudinaryClient cloudinary, AdvisoryService advisoryService,
+            WeatherRiskService weatherRiskService, DiseaseService diseaseService, Localizer localizer) {
+        this.cloudinary = cloudinary;
         this.predictions = predictions;
         this.users = users;
         this.aiClient = aiClient;
@@ -104,7 +108,26 @@ public class PredictionService {
             prediction.setSeverityGrade(result.severity().grade());
             prediction.setSeverityLabel(result.severity().label());
         }
-        prediction.setImageFilenames(images.stream().map(path -> path.getFileName().toString()).toList());
+        prediction.setImageFilenames(store(images));
+        if (result.perImage() != null) {
+            prediction.setPhotos(result.perImage().stream()
+                    .map(photo -> new PredictionPhoto(photo.index(), photo.used(),
+                            photo.top() == null ? null : photo.top().classId(),
+                            photo.top() == null ? null : photo.top().crop(),
+                            photo.top() == null ? null : photo.top().disease(),
+                            photo.top() == null ? null : photo.top().confidence(),
+                            photo.severityPercent(), photo.status(), photo.reason(),
+                            photo.severity() == null ? null : photo.severity().grade(),
+                            photo.severity() == null ? null : photo.severity().label()))
+                    .toList());
+            prediction.setPhotoCandidates(result.perImage().stream()
+                    .filter(photo -> photo.candidates() != null)
+                    .flatMap(photo -> photo.candidates().stream()
+                            .map(c -> new PredictionPhotoCandidate(photo.index(), c.classId(), c.crop(), c.disease(),
+                                    c.confidence())))
+                    .toList());
+            prediction.setPhotosAgree(images.size() > 1 ? result.photosAgree() : null);
+        }
 
         if (hasLocation) {
             prediction.setLatitude(latitude);
@@ -136,13 +159,39 @@ public class PredictionService {
         return response(prediction, null, language);
     }
 
+    /**
+     * Where the analysed photos live from now on: their Cloudinary links when Cloudinary is set up
+     * (the local copies are then deleted), otherwise their file names in the uploads folder.
+     * If any upload fails the photos stay local, so the scan is never lost.
+     */
+    private List<String> store(List<Path> images) {
+        List<String> local = images.stream().map(path -> path.getFileName().toString()).toList();
+        if (!cloudinary.isConfigured()) {
+            return local;
+        }
+        try {
+            List<String> links = images.stream().map(cloudinary::upload).toList();
+            images.forEach(imageStorage::delete);
+            return links;
+        } catch (RuntimeException e) {
+            log.warn("Cloudinary upload failed, keeping the photos on this server: {}", e.getMessage());
+            return local;
+        }
+    }
+
+    /** A stored photo: either a link (Cloudinary) or a file in the uploads folder. */
+    public record StoredImage(String url, Path file) {
+    }
+
     @Transactional(readOnly = true)
-    public Path image(Long userId, Long predictionId, int index) {
+    public StoredImage image(Long userId, Long predictionId, int index) {
         List<String> files = owned(userId, predictionId).getImageFilenames();
         if (index < 0 || index >= files.size()) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Image not found");
         }
-        return imageStorage.resolve(files.get(index));
+        String stored = files.get(index);
+        return CloudinaryClient.isRemote(stored) ? new StoredImage(stored, null)
+                : new StoredImage(null, imageStorage.resolve(stored));
     }
 
     @Transactional
@@ -162,7 +211,21 @@ public class PredictionService {
 
     private Response response(Prediction p, AiClient.Explanation explanation, String language) {
         Localizer.Localized<Advice> advice = localizer.advice(advice(p), language);
-        return new Response(PredictionDto.from(p, advice.value(), explanation), advice.info());
+        // Photos of different plants: each photo also gets its own advice, for when the farmer opens one
+        Map<Integer, Advice> photoAdvice = new HashMap<>();
+        if (Boolean.FALSE.equals(p.getPhotosAgree())) {
+            for (PredictionPhoto photo : p.getPhotos()) {
+                if (Boolean.TRUE.equals(photo.getUsed())) {
+                    List<String> ids = p.getPhotoCandidates().stream()
+                            .filter(c -> photo.getPhotoIndex().equals(c.getPhotoIndex()))
+                            .map(PredictionPhotoCandidate::getClassId).toList();
+                    photoAdvice.put(photo.getPhotoIndex(), localizer.advice(advisoryService.adviceFor(
+                            new AdvisoryService.Context(photo.getStatus(), photo.getReason(), photo.getClassId(), ids,
+                                    photo.getSeverityGrade(), null)), language).value());
+                }
+            }
+        }
+        return new Response(PredictionDto.from(p, advice.value(), explanation, photoAdvice), advice.info());
     }
 
     private Prediction owned(Long userId, Long predictionId) {

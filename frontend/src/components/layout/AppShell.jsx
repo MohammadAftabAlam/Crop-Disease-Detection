@@ -28,10 +28,18 @@ const NAV = [
   { to: "/profile", label: "nav.profile", icon: UserRound, auth: true },
 ];
 
+// Phone tab bar when logged in: the same pages, with Scan in the middle
+const TAB_ORDER = ["/dashboard", "/history", "/detect", "/diseases", "/profile"];
+const TAB_NAV = TAB_ORDER.map((to) => NAV.find((item) => item.to === to));
+
+// Phone tab bar when logged out: Scan stays in the middle (it asks for a login first,
+// then comes back to the scan page)
 const PUBLIC_NAV = [
   { to: "/", label: "nav.home", icon: House },
   { to: "/diseases", label: "nav.library", icon: BookOpen },
+  { to: "/detect", label: "nav.scan", icon: ScanLine },
   { to: "/login", label: "nav.login", icon: LogIn },
+  { to: "/register", label: "nav.signUp", icon: UserPlus },
 ];
 
 const isActive = (item, pathname) =>
@@ -204,7 +212,7 @@ function AppShell() {
   };
 
   const sidebarItems = user ? NAV : NAV.filter((item) => !item.auth);
-  const tabItems = user ? NAV : PUBLIC_NAV;
+  const tabItems = user ? TAB_NAV : PUBLIC_NAV;
 
   return (
     <div className="relative isolate min-h-screen">
