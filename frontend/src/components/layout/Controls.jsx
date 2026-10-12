@@ -1,18 +1,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Moon, Sprout, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import usePreferences from "../../hooks/usePreferences";
+import LogoMark from "../LogoMark";
 import { Segmented, cx } from "../ui";
 
 // Logo and the theme / language switches, shared by every layout
 
 export function Logo({ compact = false }) {
   return (
-    <Link to="/" className="group flex items-center gap-2.5">
-      <span className="grid size-9 place-items-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30 transition-shadow group-hover:glow">
-        <Sprout className="size-5" strokeWidth={2.4} />
-      </span>
+    <Link to="/" className="group flex items-center gap-2.5" aria-label={compact ? "CropCare AI" : undefined}>
+      <LogoMark className="size-9 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
       {!compact && (
         <span className="text-lg font-extrabold tracking-tight text-fg">
           CropCare <span className="text-gradient">AI</span>

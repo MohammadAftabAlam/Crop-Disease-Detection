@@ -3,7 +3,9 @@ package com.cropcare.prediction;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -105,6 +107,25 @@ public class PredictionService {
             prediction.setSeverityLabel(result.severity().label());
         }
         prediction.setImageFilenames(images.stream().map(path -> path.getFileName().toString()).toList());
+        if (result.perImage() != null) {
+            prediction.setPhotos(result.perImage().stream()
+                    .map(photo -> new PredictionPhoto(photo.index(), photo.used(),
+                            photo.top() == null ? null : photo.top().classId(),
+                            photo.top() == null ? null : photo.top().crop(),
+                            photo.top() == null ? null : photo.top().disease(),
+                            photo.top() == null ? null : photo.top().confidence(),
+                            photo.severityPercent(), photo.status(), photo.reason(),
+                            photo.severity() == null ? null : photo.severity().grade(),
+                            photo.severity() == null ? null : photo.severity().label()))
+                    .toList());
+            prediction.setPhotoCandidates(result.perImage().stream()
+                    .filter(photo -> photo.candidates() != null)
+                    .flatMap(photo -> photo.candidates().stream()
+                            .map(c -> new PredictionPhotoCandidate(photo.index(), c.classId(), c.crop(), c.disease(),
+                                    c.confidence())))
+                    .toList());
+            prediction.setPhotosAgree(images.size() > 1 ? result.photosAgree() : null);
+        }
 
         if (hasLocation) {
             prediction.setLatitude(latitude);
@@ -162,7 +183,21 @@ public class PredictionService {
 
     private Response response(Prediction p, AiClient.Explanation explanation, String language) {
         Localizer.Localized<Advice> advice = localizer.advice(advice(p), language);
-        return new Response(PredictionDto.from(p, advice.value(), explanation), advice.info());
+        // Photos of different plants: each photo also gets its own advice, for when the farmer opens one
+        Map<Integer, Advice> photoAdvice = new HashMap<>();
+        if (Boolean.FALSE.equals(p.getPhotosAgree())) {
+            for (PredictionPhoto photo : p.getPhotos()) {
+                if (Boolean.TRUE.equals(photo.getUsed())) {
+                    List<String> ids = p.getPhotoCandidates().stream()
+                            .filter(c -> photo.getPhotoIndex().equals(c.getPhotoIndex()))
+                            .map(PredictionPhotoCandidate::getClassId).toList();
+                    photoAdvice.put(photo.getPhotoIndex(), localizer.advice(advisoryService.adviceFor(
+                            new AdvisoryService.Context(photo.getStatus(), photo.getReason(), photo.getClassId(), ids,
+                                    photo.getSeverityGrade(), null)), language).value());
+                }
+            }
+        }
+        return new Response(PredictionDto.from(p, advice.value(), explanation, photoAdvice), advice.info());
     }
 
     private Prediction owned(Long userId, Long predictionId) {

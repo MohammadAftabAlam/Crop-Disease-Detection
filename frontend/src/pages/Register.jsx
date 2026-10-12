@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { CircleAlert, UserPlus } from "lucide-react";
 import AuthHeader from "../components/AuthHeader";
 import PasswordField, { PasswordRules, TextField } from "../components/PasswordField";
@@ -10,8 +10,9 @@ import usePreferences from "../hooks/usePreferences";
 import { STRONG_PASSWORD } from "../utils/password";
 
 function Register() {
-  const { user, login } = useAuth();
+  const { user } = useAuth();
   const { t } = usePreferences();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [error, setError] = useState("");
@@ -52,8 +53,11 @@ function Register() {
     setLoading(true);
 
     try {
+      // No token yet: the account is verified with the emailed code first
       const data = await registerUser({ name, email, password });
-      login(data.user, data.token);
+      navigate(`/verify-email?email=${encodeURIComponent(data.email || email)}`, {
+        state: { email: data.email || email, resendAfterSeconds: data.resendAfterSeconds, message: data.message },
+      });
     } catch (err) {
       setError(err.response?.data?.message || t("auth.registerFailed"));
       setLoading(false);

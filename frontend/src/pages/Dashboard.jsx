@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import AuthImage from "../components/AuthImage";
 import ConfidenceBar from "../components/ConfidenceBar";
+import LogoMark from "../components/LogoMark";
+import Select from "../components/Select";
 import { Alert, Badge, Button, Card, EmptyState, SectionTitle, Skeleton, TONES, cx, fadeUp, stagger } from "../components/ui";
 import { getPredictionHistory } from "../services/predictionService";
 import { getCurrentLocation, getWeatherRisk } from "../services/weatherService";
@@ -51,7 +53,7 @@ function Hero({ name }) {
   return (
     <Card as={motion.div} variants={fadeUp} className="relative overflow-hidden p-6 sm:p-8">
       {/* Decorative scanner rings */}
-      <div aria-hidden="true" className="pointer-events-none absolute top-1/2 -right-10 hidden -translate-y-1/2 sm:block">
+      <div aria-hidden="true" className="pointer-events-none absolute top-1/2 right-16 hidden -translate-y-1/2 md:block">
         {[0, 1, 2].map((ring) => (
           <motion.span
             key={ring}
@@ -61,8 +63,8 @@ function Hero({ name }) {
             transition={{ duration: 3, repeat: Infinity, delay: ring * 0.5 }}
           />
         ))}
-        <div className="relative grid size-28 place-items-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/30 glow">
-          <Sprout className="size-12" />
+        <div className="relative grid size-28 place-items-center rounded-full bg-primary/10 ring-1 ring-primary/30 glow">
+          <LogoMark className="size-20" />
         </div>
       </div>
 
@@ -379,19 +381,19 @@ function WeatherWidget() {
       <p className="-mt-2 mb-4 text-sm text-muted">{t("dashboard.weatherText")}</p>
 
       <div className="flex gap-2">
-        <select
-          value={crop}
-          onChange={(event) => {
-            setCrop(event.target.value);
-            setState({ status: "idle", risks: [], error: "" });
-          }}
-          aria-label={t("history.crop")}
-          className="h-10 flex-1 rounded-xl bg-surface-2 px-3 text-sm text-fg ring-1 ring-inset ring-border focus:ring-primary"
-        >
-          {crops.map((value) => (
-            <option key={value} value={value}>{cropName(value)}</option>
-          ))}
-        </select>
+        <div className="min-w-0 flex-1">
+          <Select
+            value={crop}
+            onChange={(value) => {
+              setCrop(value);
+              setState({ status: "idle", risks: [], error: "" });
+            }}
+            options={crops.map((value) => ({ value, label: cropName(value) }))}
+            label={t("history.crop")}
+            icon={Sprout}
+            size="sm"
+          />
+        </div>
         <Button size="sm" icon={MapPin} loading={state.status === "loading"} onClick={check} className="h-10">
           {t("dashboard.checkRisk")}
         </Button>
@@ -472,7 +474,7 @@ function Dashboard() {
         <StatTile icon={Gauge} label={t("dashboard.statSevere")} value={stats.severe} tone="danger" loading={loading} />
       </motion.div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
           {loading ? <Skeleton className="h-96 rounded-2xl" /> : <RecentScans predictions={predictions} />}
         </div>
@@ -491,7 +493,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         {predictions.length > 0 && <WeatherWidget />}
         <ModelCard />
       </div>

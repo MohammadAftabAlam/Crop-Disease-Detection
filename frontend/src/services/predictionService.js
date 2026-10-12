@@ -47,6 +47,17 @@ export const getPredictionImage = async (imageUrl) => {
   return response.data;
 };
 
+// "Ask about this result": the conversation, and asking a question (answered in the app language)
+export const getChat = async (predictionId) => {
+  const response = await api.get(`/predictions/${predictionId}/chat`);
+  return response.data;
+};
+
+export const askQuestion = async (predictionId, question) => {
+  const response = await api.post(`/predictions/${predictionId}/chat`, { question });
+  return response.data;
+};
+
 export const sendFeedback = async (predictionId, feedback) => {
   const response = await api.post(
     `/predictions/${predictionId}/feedback`,

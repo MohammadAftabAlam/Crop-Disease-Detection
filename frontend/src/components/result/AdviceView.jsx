@@ -102,7 +102,7 @@ function AdviceView({ advice, classId, showLibraryLink, title, translation }) {
         )}
       </Card>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {advice.immediateActions?.length > 0 && (
           <Card as={motion.div} variants={fadeUp} className="p-5 sm:p-6">
             <SectionTitle icon={ListChecks}>{t("advice.now")}</SectionTitle>

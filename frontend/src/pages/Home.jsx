@@ -275,7 +275,7 @@ function HonestModel() {
         text={t("landing.modelText")}
       />
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card as={motion.div} variants={fadeUp} className="p-6 sm:p-8">
           <h3 className="flex items-center gap-2 font-bold text-fg">
             <Target className="size-5 text-primary" /> {t("landing.accuracyTitle")}
@@ -392,7 +392,7 @@ function ProjectAndFaq() {
 
   return (
     <motion.section id="faq" {...reveal} className="mx-auto max-w-6xl scroll-mt-24 px-4 py-20 sm:px-6">
-      <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr]">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_1.2fr]">
         <motion.div variants={fadeUp}>
           <p className="mb-3 text-xs font-bold tracking-[0.18em] text-primary uppercase">{t("landing.projectEyebrow")}</p>
           <h2 className="text-3xl font-extrabold tracking-tight text-fg sm:text-4xl">{PROJECT.name}</h2>

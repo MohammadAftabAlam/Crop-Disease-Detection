@@ -226,7 +226,7 @@ export function Segmented({ options, value, onChange, layoutId, className }) {
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cx(
-              "relative rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+              "relative shrink-0 rounded-lg px-3 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors",
               active ? "text-fg" : "text-muted hover:text-fg"
             )}
           >

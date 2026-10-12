@@ -29,6 +29,18 @@ See [ai-service/README.md](ai-service/README.md). In short:
   (Meta's NLLB-200 model run locally with a Hindi farming glossary, `POST /translate`; no account
   or API key). The model (~2.5 GB) downloads on the first Hindi request, then each sentence is
   translated once and stored in MySQL. Bhashini keys in `backend/.env` are optional and take over when set.
+- "Ask about this result": follow-up questions on a scan (new **Ask** tab, tap-to-ask suggestions or
+  free text, typed or spoken through the browser's speech recognition in hi-IN / en-IN,
+  English/Hindi), answered by Google Gemini (free API key: https://aistudio.google.com ->
+  `GEMINI_API_KEY` in `backend/.env`; chat is off without it). Kept in bounds by the backend: only the
+  scan's owner, 300-character questions, 20 questions a day and 10 per scan, a strict system
+  instruction with only this diagnosis and our knowledge base as facts, JSON answers marked
+  in/out of scope, Google's safety filter, and a final check that removes any pesticide name or dose.
+  Only text is sent, never photos; every question and answer is stored in `chat_messages` for review.
+- email verification at sign-up: a 6-digit code is emailed (Gmail SMTP from `backend/.env`; without
+  it the code is printed in the backend log for local testing). Valid 10 minutes, 5 wrong tries,
+  a new code at most once a minute; stored only as an HMAC. Logging in to an unverified account
+  sends a fresh code and opens the code screen. Accounts created before this feature keep working.
 - offline mode: an installable app (PWA); after a one-time 31 MB download (Profile → Offline mode)
   the phone diagnoses with MobileNetV3 in the browser and saves photos for full analysis later.
   Try it with `npm run build && npm run preview` (the service worker only runs in a production build).

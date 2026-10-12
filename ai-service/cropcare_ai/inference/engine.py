@@ -155,9 +155,32 @@ class Predictor:
             for result, clip in zip(gate_results, self.bioclip.check(images)):
                 result.update(clip, passed=result["passed"] and clip["passed"])
 
-        per_image = [{"index": i, "gate": gate_results[i], "top": self._candidate(int(probs[i].argmax()), probs[i])}
-                     for i in range(len(images))]
         passed = [i for i, result in enumerate(gate_results) if result["passed"]]
+        crop_mask = (np.array([self.taxonomy[c].crop == crop for c in self.bundle.class_ids], dtype=float)
+                     if crop else None)
+
+        def restrict(p):
+            # The farmer named the crop: only that crop's classes can be the answer
+            return p if crop_mask is None else p * crop_mask / max(float((p * crop_mask).sum()), 1e-12)
+
+        # Each photo's own full answer (status, top diseases), so the app can show one photo on its own
+        # when the photos turn out to be of different plants
+        per_image = []
+        own_probs = {}
+        for i in range(len(images)):
+            own = restrict(probs[i])
+            own_probs[i] = own
+            entry = {"index": i, "used": i in passed, "gate": gate_results[i],
+                     "top": self._candidate(int(own.argmax()), own),
+                     "status": "rejected", "reason": None, "severity": None, "candidates": []}
+            if i in passed:
+                own_decision = decide(own, self.calibration["qhat"])
+                own_shown = own_decision.set_indices or [int(k) for k in np.argsort(-own)[:3]]
+                entry.update({"status": own_decision.status,
+                              "candidates": [self._candidate(k, own) for k in own_shown]})
+            per_image.append(entry)
+        # Photos of one plant should point to the same problem; if not, the average is a compromise
+        photos_agree = len({per_image[i]["top"]["classId"] for i in passed}) <= 1
 
         response = {
             "success": True,
@@ -170,6 +193,7 @@ class Predictor:
             "explanation": None,
             "selectedCrop": crop,
             "reason": None,
+            "photosAgree": photos_agree,
         }
 
         if not passed:
@@ -179,11 +203,7 @@ class Predictor:
                                 + ", ".join(self.crop_names) + "). Photograph a single leaf of a supported crop.")}
 
         # Several photos of the same plant: average their probabilities
-        combined = probs[passed].mean(axis=0)
-        if crop:
-            # The farmer named the crop: only that crop's classes can be the answer
-            mask = np.array([self.taxonomy[c].crop == crop for c in self.bundle.class_ids], dtype=float)
-            combined = combined * mask / (combined * mask).sum()
+        combined = restrict(probs[passed].mean(axis=0))
         decision = decide(combined, self.calibration["qhat"])
         best = int(combined.argmax())
         shown = decision.set_indices or [int(i) for i in np.argsort(-combined)[:3]]
@@ -197,19 +217,37 @@ class Predictor:
             "message": self._message(decision.status, best_class, [self.taxonomy[self.bundle.class_ids[i]] for i in shown]),
         })
 
-        first = passed[0]
-        severity_mask = None
-        # Severity only for diseases that leave lesions (not viruses, mites or insect damage)
-        if self.severity and decision.status != "unknown" and best_class.lesions and (with_severity or self.min_lesion_percent):
-            estimates = [self.severity.estimate(images[i]) for i in passed]
-            severity_mask = estimates[0].pop("_lesion_mask")
-            for estimate in estimates[1:]:
-                estimate.pop("_lesion_mask")
-            percent = float(np.mean([e["percent"] for e in estimates]))
+        def own_class(i):
+            return self.taxonomy[self.bundle.class_ids[int(own_probs[i].argmax())]]
+
+        # Severity only for diseases that leave lesions (not viruses, mites or insect damage). The lesion
+        # model does not depend on the class, so each photo is measured once and reused below.
+        lesion_masks, estimates = {}, {}
+        wanted = with_severity or self.min_lesion_percent
+        needs = (decision.status != "unknown" and best_class.lesions) or any(own_class(i).lesions for i in passed)
+        if self.severity and wanted and needs:
+            for i in passed:
+                estimates[i] = self.severity.estimate(images[i])
+                lesion_masks[i] = estimates[i].pop("_lesion_mask")
+
+        # Each photo's own severity and lesion cross-check
+        for i in passed:
+            entry, cls = per_image[i], own_class(i)
+            if i in estimates and cls.lesions and entry["status"] != "unknown":
+                percent = estimates[i]["percent"]
+                entry["severityPercent"] = percent
+                grade = self.taxonomy.grade_for(percent)
+                entry["severity"] = {"percent": round(percent, 1), "grade": grade.grade, "label": grade.label}
+                if self.min_lesion_percent and percent < self.min_lesion_percent:
+                    entry.update({"status": "unknown", "reason": "no_lesions"})
+
+        if estimates and decision.status != "unknown" and best_class.lesions:
+            used = [estimates[i] for i in passed]
+            percent = float(np.mean([e["percent"] for e in used]))
             grade = self.taxonomy.grade_for(percent)
             response["severity"] = {"percent": round(percent, 1), "grade": grade.grade, "label": grade.label,
-                                    "leafAreaFound": all(e["leafAreaFound"] for e in estimates),
-                                    "perImage": [e["percent"] for e in estimates]}
+                                    "leafAreaFound": all(e["leafAreaFound"] for e in used),
+                                    "perImage": [e["percent"] for e in used]}
 
             # Lesion cross-check: a spot/blight/rust diagnosis with almost no lesions on the leaf is not
             # trusted (e.g. insect holes read as brown spot). Threshold chosen with evaluate_checks.py.
@@ -221,17 +259,31 @@ class Predictor:
                                 "knows. It may be insect damage, a nutrient problem or something else: please ask an "
                                 "agricultural expert or your nearest Krishi Vigyan Kendra."),
                 })
-            if not with_severity:
-                response["severity"] = None
+        if not with_severity:
+            response["severity"] = None
+            for entry in per_image:
+                entry["severity"] = None
 
         if explain:
-            with self._lock:
-                heat = grad_cam(self.model, batch[first:first + 1], best)
-            response["explanation"] = {
-                "imageIndex": first,
-                "heatmap": to_data_uri(heatmap_overlay(images[first], heat)),
-                "lesions": to_data_uri(mask_overlay(images[first], severity_mask)) if severity_mask is not None else None,
-            }
+            # For every photo used: where the model looked for the combined answer, and (when the photo
+            # on its own says something else) for that photo's own answer
+            views = []
+            for i in passed:
+                with self._lock:
+                    heat = grad_cam(self.model, batch[i:i + 1], best)
+                own_best = int(own_probs[i].argmax())
+                own_heat = None
+                if own_best != best:
+                    with self._lock:
+                        own_heat = to_data_uri(heatmap_overlay(images[i], grad_cam(self.model, batch[i:i + 1], own_best)))
+                views.append({
+                    "imageIndex": i,
+                    "heatmap": to_data_uri(heatmap_overlay(images[i], heat)),
+                    "photoHeatmap": own_heat,
+                    "lesions": to_data_uri(mask_overlay(images[i], lesion_masks[i])) if i in lesion_masks else None,
+                })
+            # First photo at the top level (older clients), all photos in "images"
+            response["explanation"] = {**views[0], "images": views}
         return response
 
     @staticmethod

@@ -28,6 +28,8 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
+import com.cropcare.ai.AiClient.AiPrediction;
+import com.cropcare.ai.AiClient.PhotoResult;
 import com.cropcare.common.ApiException;
 import com.cropcare.weather.WeatherClient.Hour;
 import com.jayway.jsonpath.JsonPath;
@@ -265,5 +267,64 @@ class PredictionIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.prediction.advice.immediateActions[0]").value(containsString("caterpillars")));
 
         verify(aiClient).predict(anyList(), anyBoolean(), org.mockito.ArgumentMatchers.eq("maize"));
+    }
+
+    @Test
+    void chatIsOffWithoutAGeminiKey() throws Exception {
+        String token = register(uniqueEmail());
+        given(aiClient.predict(anyList(), anyBoolean(), any()))
+                .willReturn(confident("potato__late_blight", "Potato", "Late Blight", false, 2));
+        String body = mvc.perform(detect(token).file(photo("image")))
+                .andReturn().getResponse().getContentAsString();
+        Integer id = JsonPath.read(body, "$.prediction.id");
+
+        mvc.perform(get("/api/predictions/" + id + "/chat").header("Authorization", "Bearer " + token))
+                .andExpect(jsonPath("$.chat.enabled").value(false))
+                .andExpect(jsonPath("$.chat.reason").value("not_configured"));
+        mvc.perform(post("/api/predictions/" + id + "/chat").header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"question\":\"Will it spread?\"}"))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
+    void eachPhotoKeepsItsOwnAnswerAndDisagreementIsFlagged() throws Exception {
+        String token = register(uniqueEmail());
+        AiPrediction twoPhotos = new AiPrediction(true, "ambiguous", "Not sure.", "tomato__late_blight", "Tomato",
+                "Late Blight", false, 39.6,
+                List.of(new com.cropcare.ai.AiClient.Candidate("tomato__late_blight", "Tomato", "Late Blight", false, 39.6)),
+                null, null, 2, 2, null, null,
+                List.of(new PhotoResult(0, true, new com.cropcare.ai.AiClient.Candidate("tomato__late_blight", "Tomato",
+                                "Late Blight", false, 78.8), 19.1, "confident", null,
+                                new com.cropcare.ai.AiClient.Severity(19.1, 2, "Moderate", true),
+                                List.of(new com.cropcare.ai.AiClient.Candidate("tomato__late_blight", "Tomato",
+                                        "Late Blight", false, 78.8))),
+                        new PhotoResult(1, true, new com.cropcare.ai.AiClient.Candidate("maize__insect_damage", "Maize",
+                                "Insect Feeding Damage", false, 67.5), null, "confident", null, null,
+                                List.of(new com.cropcare.ai.AiClient.Candidate("maize__insect_damage", "Maize",
+                                        "Insect Feeding Damage", false, 67.5)))),
+                false);
+        given(aiClient.predict(anyList(), anyBoolean(), any())).willReturn(twoPhotos);
+
+        String body = mvc.perform(detect(token).file(photo("images")).file(photo("images")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.prediction.photosAgree").value(false))
+                .andExpect(jsonPath("$.prediction.photos", hasSize(2)))
+                .andExpect(jsonPath("$.prediction.photos[1].classId").value("maize__insect_damage"))
+                .andExpect(jsonPath("$.prediction.photos[1].confidence").value(67.5))
+                .andExpect(jsonPath("$.prediction.photos[1].imageUrl").value(startsWith("/api/predictions/")))
+                // Different plants: each photo carries its own answer and its own advice
+                .andExpect(jsonPath("$.prediction.photos[0].status").value("confident"))
+                .andExpect(jsonPath("$.prediction.photos[0].severity.grade").value(2))
+                .andExpect(jsonPath("$.prediction.photos[0].advice.headline").value("Tomato: Late Blight"))
+                .andExpect(jsonPath("$.prediction.photos[1].candidates[0].classId").value("maize__insect_damage"))
+                .andExpect(jsonPath("$.prediction.photos[1].advice.headline").value("Maize: Insect Feeding Damage"))
+                .andReturn().getResponse().getContentAsString();
+        Integer id = JsonPath.read(body, "$.prediction.id");
+
+        // Stored: still there when the scan is opened later from History
+        mvc.perform(get("/api/predictions/" + id).header("Authorization", "Bearer " + token))
+                .andExpect(jsonPath("$.prediction.photosAgree").value(false))
+                .andExpect(jsonPath("$.prediction.photos[0].severityPercent").value(19.1))
+                .andExpect(jsonPath("$.prediction.photos[1].advice.headline").value("Maize: Insect Feeding Damage"));
     }
 }

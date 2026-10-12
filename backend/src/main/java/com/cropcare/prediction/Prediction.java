@@ -78,6 +78,22 @@ public class Prediction {
     @Column(name = "severity_label", length = 30)
     private String severityLabel;
 
+    /** Each photo's own answer, in upload order. */
+    @ElementCollection
+    @CollectionTable(name = "prediction_photos", joinColumns = @JoinColumn(name = "prediction_id"))
+    @OrderColumn(name = "item_order")
+    private List<PredictionPhoto> photos = new ArrayList<>();
+
+    /** Each photo's own top diseases (photoIndex says which photo) */
+    @ElementCollection
+    @CollectionTable(name = "prediction_photo_candidates", joinColumns = @JoinColumn(name = "prediction_id"))
+    @OrderColumn(name = "item_order")
+    private List<PredictionPhotoCandidate> photoCandidates = new ArrayList<>();
+
+    /** false when the photos point to different problems; null for single-photo or older scans */
+    @Column(name = "photos_agree")
+    private Boolean photosAgree;
+
     /** File names inside the uploads folder, in upload order. */
     @ElementCollection
     @CollectionTable(name = "prediction_images", joinColumns = @JoinColumn(name = "prediction_id"))
@@ -201,6 +217,30 @@ public class Prediction {
 
     public void setConfidence(Double confidence) {
         this.confidence = confidence;
+    }
+
+    public List<PredictionPhoto> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<PredictionPhoto> photos) {
+        this.photos = new ArrayList<>(photos);
+    }
+
+    public List<PredictionPhotoCandidate> getPhotoCandidates() {
+        return photoCandidates;
+    }
+
+    public void setPhotoCandidates(List<PredictionPhotoCandidate> photoCandidates) {
+        this.photoCandidates = new ArrayList<>(photoCandidates);
+    }
+
+    public Boolean getPhotosAgree() {
+        return photosAgree;
+    }
+
+    public void setPhotosAgree(Boolean photosAgree) {
+        this.photosAgree = photosAgree;
     }
 
     public List<PredictionCandidate> getCandidates() {

@@ -31,7 +31,20 @@ public record PredictionDto(
         String remedy,
         Feedback feedback,
         Explanation explanation,
+        /** Each photo's own answer (empty for scans made before this was stored) */
+        List<Photo> photos,
+        /** false: the photos point to different problems; null: one photo */
+        Boolean photosAgree,
         Instant createdAt) {
+
+    /**
+     * One photo's own result. status / candidates / severity are its answer on its own; advice is only
+     * filled when the photos disagree (different plants), so each photo can be opened separately.
+     */
+    public record Photo(Integer index, Boolean used, String classId, String crop, String disease, Double confidence,
+            Double severityPercent, String imageUrl, String status, String reason, Severity severity,
+            List<Candidate> candidates, Advice advice) {
+    }
 
     public record Candidate(String classId, String crop, String disease, Double confidence) {
     }
@@ -46,6 +59,11 @@ public record PredictionDto(
     }
 
     static PredictionDto from(Prediction p, Advice advice, Explanation explanation) {
+        return from(p, advice, explanation, java.util.Map.of());
+    }
+
+    static PredictionDto from(Prediction p, Advice advice, Explanation explanation,
+            java.util.Map<Integer, Advice> photoAdvice) {
         List<String> imageUrls = IntStream.range(0, p.getImageFilenames().size())
                 .mapToObj(i -> "/api/predictions/" + p.getId() + "/images/" + i)
                 .toList();
@@ -62,7 +80,22 @@ public record PredictionDto(
                 p.getCandidates().stream()
                         .map(c -> new Candidate(c.getClassId(), c.getCrop(), c.getDisease(), c.getConfidence()))
                         .toList(),
-                severity, weather, imageUrls, advice, summary(advice), feedback, explanation, p.getCreatedAt());
+                severity, weather, imageUrls, advice, summary(advice), feedback, explanation,
+                p.getPhotos().stream()
+                        .map(ph -> new Photo(ph.getPhotoIndex(), ph.getUsed(), ph.getClassId(), ph.getCrop(),
+                                ph.getDisease(), ph.getConfidence(), ph.getSeverityPercent(),
+                                ph.getPhotoIndex() != null && ph.getPhotoIndex() < imageUrls.size()
+                                        ? imageUrls.get(ph.getPhotoIndex()) : null,
+                                ph.getStatus(), ph.getReason(),
+                                ph.getSeverityPercent() == null || ph.getSeverityGrade() == null ? null
+                                        : new Severity(ph.getSeverityPercent(), ph.getSeverityGrade(), ph.getSeverityLabel()),
+                                p.getPhotoCandidates().stream()
+                                        .filter(c -> c.getPhotoIndex() != null && c.getPhotoIndex().equals(ph.getPhotoIndex()))
+                                        .map(c -> new Candidate(c.getClassId(), c.getCrop(), c.getDisease(), c.getConfidence()))
+                                        .toList(),
+                                photoAdvice.get(ph.getPhotoIndex())))
+                        .toList(),
+                p.getPhotosAgree(), p.getCreatedAt());
     }
 
     /** One-paragraph version of the advice (kept for the current frontend's "remedy" field). */

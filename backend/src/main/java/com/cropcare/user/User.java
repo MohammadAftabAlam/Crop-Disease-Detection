@@ -38,6 +38,23 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    /** False until the emailed code is entered. Null = account made before verification existed (treated as verified). */
+    @Column(name = "email_verified")
+    private Boolean emailVerified;
+
+    /** HMAC of the current 6-digit code (never the code itself), its expiry, wrong tries and when it was sent. */
+    @Column(name = "verification_code_hash", length = 64)
+    private String verificationCodeHash;
+
+    @Column(name = "verification_expires_at")
+    private Instant verificationExpiresAt;
+
+    @Column(name = "verification_attempts")
+    private Integer verificationAttempts;
+
+    @Column(name = "verification_sent_at")
+    private Instant verificationSentAt;
+
     @PrePersist
     void onCreate() {
         createdAt = Instant.now();
@@ -85,6 +102,46 @@ public class User {
 
     public void setResetTokenExpiresAt(Instant resetTokenExpiresAt) {
         this.resetTokenExpiresAt = resetTokenExpiresAt;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified == null || emailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
+    public String getVerificationCodeHash() {
+        return verificationCodeHash;
+    }
+
+    public void setVerificationCodeHash(String verificationCodeHash) {
+        this.verificationCodeHash = verificationCodeHash;
+    }
+
+    public Instant getVerificationExpiresAt() {
+        return verificationExpiresAt;
+    }
+
+    public void setVerificationExpiresAt(Instant verificationExpiresAt) {
+        this.verificationExpiresAt = verificationExpiresAt;
+    }
+
+    public int getVerificationAttempts() {
+        return verificationAttempts == null ? 0 : verificationAttempts;
+    }
+
+    public void setVerificationAttempts(Integer verificationAttempts) {
+        this.verificationAttempts = verificationAttempts;
+    }
+
+    public Instant getVerificationSentAt() {
+        return verificationSentAt;
+    }
+
+    public void setVerificationSentAt(Instant verificationSentAt) {
+        this.verificationSentAt = verificationSentAt;
     }
 
     public Instant getCreatedAt() {

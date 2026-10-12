@@ -1,5 +1,6 @@
 package com.cropcare.common;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -25,7 +26,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     ResponseEntity<Map<String, Object>> handleApi(ApiException ex) {
-        return error(ex.getStatus(), ex.getMessage());
+        if (ex.getDetails().isEmpty()) {
+            return error(ex.getStatus(), ex.getMessage());
+        }
+        Map<String, Object> body = new LinkedHashMap<>(Map.of("success", false, "message", ex.getMessage()));
+        body.putAll(ex.getDetails());
+        return ResponseEntity.status(ex.getStatus()).body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

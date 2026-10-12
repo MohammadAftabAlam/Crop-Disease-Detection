@@ -12,7 +12,9 @@ public record AppProperties(
         String aiServiceUrl,
         String uploadDir,
         Bhashini bhashini,
-        Translation translation) {
+        Translation translation,
+        Gemini gemini,
+        Chat chat) {
 
     public record Jwt(String secret, Duration expiry) {
     }
@@ -24,6 +26,20 @@ public record AppProperties(
      * first farmer who opens a Hindi result does not wait for the model.
      */
     public record Translation(boolean localEnabled, boolean warmUp) {
+    }
+
+    /** Google Gemini API for the "ask about this result" chat. Empty apiKey = chat off. */
+    public record Gemini(String apiKey, String model, String baseUrl) {
+        public boolean configured() {
+            return apiKey != null && !apiKey.isBlank();
+        }
+    }
+
+    /**
+     * Limits on the chat: questions per user per day, questions per scan, question length,
+     * and the answer length the model may produce.
+     */
+    public record Chat(int dailyLimit, int perPredictionLimit, int maxQuestionChars, int maxAnswerTokens) {
     }
 
     /** Bhashini (Government of India) translation API. Empty userId/apiKey = translation off. */

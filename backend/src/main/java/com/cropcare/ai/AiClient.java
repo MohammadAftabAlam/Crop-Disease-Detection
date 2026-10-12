@@ -51,8 +51,20 @@ public class AiClient {
     public record Severity(Double percent, Integer grade, String label, Boolean leafAreaFound) {
     }
 
+    /** Grad-CAM heat map and lesion overlay of one photo (data: URIs) */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Explanation(Integer imageIndex, String heatmap, String lesions) {
+    public record ExplanationView(Integer imageIndex, String heatmap, String lesions) {
+    }
+
+    /** The first photo's overlays at the top level; {@code images} has one entry per photo used. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record Explanation(Integer imageIndex, String heatmap, String lesions, List<ExplanationView> images) {
+    }
+
+    /** What one photo said on its own; used = false when the plant check dropped it. */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record PhotoResult(Integer index, Boolean used, Candidate top, Double severityPercent, String status,
+            String reason, Severity severity, List<Candidate> candidates) {
     }
 
     /**
@@ -76,7 +88,10 @@ public class AiClient {
             Integer imagesUsed,
             String selectedCrop,
             /** Why the status is what it is, e.g. "no_lesions" when the lesion cross-check fired */
-            String reason) {
+            String reason,
+            List<PhotoResult> perImage,
+            /** false when the photos' own answers differ (probably not one plant / one problem) */
+            Boolean photosAgree) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

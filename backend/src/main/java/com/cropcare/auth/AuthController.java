@@ -19,7 +19,10 @@ import com.cropcare.auth.AuthDtos.ForgotPasswordRequest;
 import com.cropcare.auth.AuthDtos.LoginRequest;
 import com.cropcare.auth.AuthDtos.MessageResponse;
 import com.cropcare.auth.AuthDtos.RegisterRequest;
+import com.cropcare.auth.AuthDtos.RegisterResponse;
+import com.cropcare.auth.AuthDtos.ResendCodeRequest;
 import com.cropcare.auth.AuthDtos.ResetPasswordRequest;
+import com.cropcare.auth.AuthDtos.VerifyEmailRequest;
 
 import jakarta.validation.Valid;
 
@@ -33,10 +36,21 @@ public class AuthController {
         this.authService = authService;
     }
 
+    /** Creates the account and emails a 6-digit code; the token comes from /verify-email. */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
+    public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/verify-email")
+    public AuthResponse verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        return authService.verifyEmail(request.email(), request.code());
+    }
+
+    @PostMapping("/resend-code")
+    public RegisterResponse resendCode(@Valid @RequestBody ResendCodeRequest request) {
+        return authService.resendCode(request.email());
     }
 
     @PostMapping("/login")

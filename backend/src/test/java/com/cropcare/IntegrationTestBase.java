@@ -1,11 +1,15 @@
 package com.cropcare;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 import java.util.UUID;
 
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -19,6 +23,8 @@ import com.cropcare.ai.AiClient.AiPrediction;
 import com.cropcare.ai.AiClient.Candidate;
 import com.cropcare.ai.AiClient.Explanation;
 import com.cropcare.ai.AiClient.Severity;
+import com.cropcare.auth.MailService;
+import com.cropcare.user.User;
 import com.cropcare.weather.WeatherClient;
 import com.jayway.jsonpath.JsonPath;
 
@@ -40,13 +46,36 @@ abstract class IntegrationTestBase {
     @MockitoBean
     WeatherClient weatherClient;
 
+    /** No real emails in tests; the sign-up code is read from the mock instead. */
+    @MockitoBean
+    MailService mailService;
+
+    /** Signs up, enters the emailed code, and returns the login token. */
     String register(String email) throws Exception {
-        String body = mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"name":"Test Farmer","email":"%s","password":"%s"}""".formatted(email, PASSWORD)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isCreated());
+        String body = mvc.perform(post("/api/auth/verify-email").contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"email":"%s","code":"%s"}""".formatted(email, lastCode(email))))
+                .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return JsonPath.read(body, "$.token");
+    }
+
+    /** The most recent verification code "emailed" to this address. */
+    String lastCode(String email) {
+        ArgumentCaptor<User> users = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<String> codes = ArgumentCaptor.forClass(String.class);
+        verify(mailService, atLeastOnce()).sendVerificationCode(users.capture(), codes.capture(), anyInt());
+        String code = null;
+        for (int i = 0; i < codes.getAllValues().size(); i++) {
+            if (users.getAllValues().get(i).getEmail().equalsIgnoreCase(email)) {
+                code = codes.getAllValues().get(i);
+            }
+        }
+        return code;
     }
 
     static String uniqueEmail() {
@@ -57,7 +86,7 @@ abstract class IntegrationTestBase {
         Severity severity = severityGrade == null ? null : new Severity(8.5, severityGrade, "Low", true);
         return new AiPrediction(true, "confident", crop + ": " + disease + ".", classId, crop, disease, healthy, 96.4,
                 List.of(new Candidate(classId, crop, disease, healthy, 96.4)), severity,
-                new Explanation(0, "data:image/png;base64,AAAA", null), 1, 1, null, null);
+                new Explanation(0, "data:image/png;base64,AAAA", null, null), 1, 1, null, null, null, null);
     }
 
     static AiPrediction ambiguous() {
@@ -65,18 +94,18 @@ abstract class IntegrationTestBase {
                 "Early Blight", false, 51.0,
                 List.of(new Candidate("tomato__early_blight", "Tomato", "Early Blight", false, 51.0),
                         new Candidate("tomato__late_blight", "Tomato", "Late Blight", false, 40.0)),
-                null, null, 1, 1, null, null);
+                null, null, 1, 1, null, null, null, null);
     }
 
     /** A spot-type guess that the AI's lesion cross-check turned into "unknown" (no disease spots found) */
     static AiPrediction noLesions() {
         return new AiPrediction(true, "unknown", "No disease spots were found on this leaf.", "rice__brown_spot", "Rice",
                 "Brown Spot", false, 64.9, List.of(new Candidate("rice__brown_spot", "Rice", "Brown Spot", false, 64.9)),
-                new Severity(0.5, 0, "None", true), null, 1, 1, "maize", "no_lesions");
+                new Severity(0.5, 0, "None", true), null, 1, 1, "maize", "no_lesions", null, null);
     }
 
     static AiPrediction rejected() {
         return new AiPrediction(true, "rejected", "This does not look like a leaf of a supported crop.", null, null,
-                null, null, null, List.of(), null, null, 1, 0, null, null);
+                null, null, null, List.of(), null, null, 1, 0, null, null, null, null);
     }
 }

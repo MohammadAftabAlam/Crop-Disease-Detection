@@ -28,6 +28,20 @@ public final class AuthDtos {
             @NotBlank(message = "Please enter your password.") String password) {
     }
 
+    public record VerifyEmailRequest(
+            @NotBlank(message = "Please enter your email address.") String email,
+            @NotBlank(message = "Please enter the 6-digit code.") @Pattern(regexp = "^\\s*\\d{6}\\s*$", message = "The code has 6 digits.") String code) {
+    }
+
+    public record ResendCodeRequest(
+            @NotBlank(message = "Please enter your email address.") String email) {
+    }
+
+    /** After sign-up: no token yet, the user must enter the emailed code first. */
+    public record RegisterResponse(boolean success, String message, boolean verificationRequired, String email,
+            int codeValidMinutes, int resendAfterSeconds) {
+    }
+
     public record ForgotPasswordRequest(
             @NotBlank(message = "Please enter your email address.") String email) {
     }

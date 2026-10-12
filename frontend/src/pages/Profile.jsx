@@ -83,7 +83,7 @@ function ChangePassword() {
           autoComplete="current-password"
         />
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <PasswordField
             id="newPassword"
             label={t("profile.new")}
@@ -130,7 +130,7 @@ function Profile() {
     <>
       <PageHeader eyebrow={t("profile.eyebrow")} title={t("profile.title")} description={t("profile.description")} />
 
-      <motion.div variants={stagger} initial="hidden" animate="show" className="grid gap-6 lg:grid-cols-3">
+      <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6">
           <Card as={motion.div} variants={fadeUp} className="p-6 text-center">
             <div className="mx-auto grid size-20 place-items-center rounded-full bg-primary text-2xl font-extrabold text-primary-fg glow">

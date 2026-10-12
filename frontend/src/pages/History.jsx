@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { CircleAlert, FolderOpen, Gauge, Images, MessageSquareCheck, ScanLine, Search, SearchX } from "lucide-react";
+import { CircleAlert, FolderOpen, Gauge, Images, MessageSquareCheck, ScanLine, Search, SearchX, Sprout } from "lucide-react";
 import AuthImage from "../components/AuthImage";
 import ConfidenceBar from "../components/ConfidenceBar";
+import Select from "../components/Select";
 import { Alert, Badge, Button, Card, EmptyState, PageHeader, Segmented, Skeleton, TONES, cx, fadeUp, stagger } from "../components/ui";
 import { getPredictionHistory } from "../services/predictionService";
 import usePreferences from "../hooks/usePreferences";
@@ -141,7 +142,7 @@ function History() {
     return (
       <>
         {header}
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2, 3, 4, 5].map((key) => (
             <Skeleton key={key} className="h-72 rounded-2xl" />
           ))}
@@ -204,17 +205,19 @@ function History() {
         </div>
 
         {crops.length > 1 && (
-          <select
-            value={crop}
-            onChange={(event) => setCrop(event.target.value)}
-            aria-label={t("history.crop")}
-            className="h-10 rounded-xl bg-surface-2 px-3 text-sm text-fg ring-1 ring-inset ring-border focus:ring-primary"
-          >
-            <option value="all">{t("history.allCrops")}</option>
-            {crops.map((value) => (
-              <option key={value} value={value}>{cropName(value)}</option>
-            ))}
-          </select>
+          <div className="lg:w-48">
+            <Select
+              value={crop}
+              onChange={setCrop}
+              options={[
+                { value: "all", label: t("history.allCrops") },
+                ...crops.map((value) => ({ value, label: cropName(value) })),
+              ]}
+              label={t("history.crop")}
+              icon={Sprout}
+              size="sm"
+            />
+          </div>
         )}
       </Card>
 
@@ -225,7 +228,7 @@ function History() {
           variants={stagger}
           initial="hidden"
           animate="show"
-          className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
         >
           <AnimatePresence>
             {filtered.map((item) => (
