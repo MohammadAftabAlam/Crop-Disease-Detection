@@ -3,9 +3,21 @@ import { Leaf } from "lucide-react";
 import { getPredictionImage } from "../services/predictionService";
 import { cx } from "./ui";
 
-// An <img> for a stored prediction photo. The endpoint needs the auth header,
-// so the photo is fetched as a blob - only once it scrolls into view.
+const isRemote = (src) => /^https?:\/\//.test(src || "");
+
+// Cloudinary can resize and re-encode on the fly: at most 1200px wide, best format and quality
+// for the browser (a 4 MB phone photo becomes ~150 KB)
+const optimised = (src) =>
+  src.includes("res.cloudinary.com") && src.includes("/image/upload/") && !src.includes("/image/upload/f_auto")
+    ? src.replace("/image/upload/", "/image/upload/f_auto,q_auto,c_limit,w_1200/")
+    : src;
+
+// An <img> for a stored prediction photo.
+// - Photos on Cloudinary come as an https link and load straight from its CDN.
+// - Photos kept on the backend need the auth header, so they are fetched as a blob,
+//   only once they scroll into view.
 function AuthImage({ src, alt, className }) {
+  const remote = isRemote(src);
   const [objectUrl, setObjectUrl] = useState(null);
   const [failed, setFailed] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -15,7 +27,7 @@ function AuthImage({ src, alt, className }) {
   useEffect(() => {
     const element = placeholderRef.current;
 
-    if (!element || visible) {
+    if (!element || visible || remote) {
       return undefined;
     }
 
@@ -32,10 +44,10 @@ function AuthImage({ src, alt, className }) {
     observer.observe(element);
 
     return () => observer.disconnect();
-  }, [visible]);
+  }, [visible, remote]);
 
   useEffect(() => {
-    if (!visible || !src) {
+    if (!visible || !src || remote) {
       return undefined;
     }
 
@@ -62,7 +74,20 @@ function AuthImage({ src, alt, className }) {
         URL.revokeObjectURL(url);
       }
     };
-  }, [src, visible]);
+  }, [src, visible, remote]);
+
+  if (remote && !failed) {
+    return (
+      <img
+        src={optimised(src)}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        onError={() => setFailed(true)}
+        className={cx("object-cover", className)}
+      />
+    );
+  }
 
   if (objectUrl) {
     return <img src={objectUrl} alt={alt} className={cx("object-cover", className)} />;

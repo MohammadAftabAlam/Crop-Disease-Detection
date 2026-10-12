@@ -37,6 +37,7 @@ public class PredictionService {
     private final UserRepository users;
     private final AiClient aiClient;
     private final ImageStorage imageStorage;
+    private final CloudinaryClient cloudinary;
     private final AdvisoryService advisoryService;
     private final WeatherRiskService weatherRiskService;
     private final DiseaseService diseaseService;
@@ -47,8 +48,9 @@ public class PredictionService {
     }
 
     public PredictionService(PredictionRepository predictions, UserRepository users, AiClient aiClient,
-            ImageStorage imageStorage, AdvisoryService advisoryService, WeatherRiskService weatherRiskService,
-            DiseaseService diseaseService, Localizer localizer) {
+            ImageStorage imageStorage, CloudinaryClient cloudinary, AdvisoryService advisoryService,
+            WeatherRiskService weatherRiskService, DiseaseService diseaseService, Localizer localizer) {
+        this.cloudinary = cloudinary;
         this.predictions = predictions;
         this.users = users;
         this.aiClient = aiClient;
@@ -106,7 +108,7 @@ public class PredictionService {
             prediction.setSeverityGrade(result.severity().grade());
             prediction.setSeverityLabel(result.severity().label());
         }
-        prediction.setImageFilenames(images.stream().map(path -> path.getFileName().toString()).toList());
+        prediction.setImageFilenames(store(images));
         if (result.perImage() != null) {
             prediction.setPhotos(result.perImage().stream()
                     .map(photo -> new PredictionPhoto(photo.index(), photo.used(),
@@ -157,13 +159,39 @@ public class PredictionService {
         return response(prediction, null, language);
     }
 
+    /**
+     * Where the analysed photos live from now on: their Cloudinary links when Cloudinary is set up
+     * (the local copies are then deleted), otherwise their file names in the uploads folder.
+     * If any upload fails the photos stay local, so the scan is never lost.
+     */
+    private List<String> store(List<Path> images) {
+        List<String> local = images.stream().map(path -> path.getFileName().toString()).toList();
+        if (!cloudinary.isConfigured()) {
+            return local;
+        }
+        try {
+            List<String> links = images.stream().map(cloudinary::upload).toList();
+            images.forEach(imageStorage::delete);
+            return links;
+        } catch (RuntimeException e) {
+            log.warn("Cloudinary upload failed, keeping the photos on this server: {}", e.getMessage());
+            return local;
+        }
+    }
+
+    /** A stored photo: either a link (Cloudinary) or a file in the uploads folder. */
+    public record StoredImage(String url, Path file) {
+    }
+
     @Transactional(readOnly = true)
-    public Path image(Long userId, Long predictionId, int index) {
+    public StoredImage image(Long userId, Long predictionId, int index) {
         List<String> files = owned(userId, predictionId).getImageFilenames();
         if (index < 0 || index >= files.size()) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Image not found");
         }
-        return imageStorage.resolve(files.get(index));
+        String stored = files.get(index);
+        return CloudinaryClient.isRemote(stored) ? new StoredImage(stored, null)
+                : new StoredImage(null, imageStorage.resolve(stored));
     }
 
     @Transactional

@@ -49,6 +49,9 @@ class ChatIntegrationTest extends IntegrationTestBase {
     static final AtomicReference<JsonNode> LAST_REQUEST = new AtomicReference<>();
     static final AtomicReference<String> LAST_KEY = new AtomicReference<>();
     static final AtomicReference<String> LAST_PATH = new AtomicReference<>();
+    /** Models that answer "high demand" (HTTP 503), and every model path called, in order */
+    static final java.util.Set<String> BUSY_MODELS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    static final java.util.List<String> CALLS = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     static {
         try {
@@ -64,6 +67,7 @@ class ChatIntegrationTest extends IntegrationTestBase {
     static void gemini(DynamicPropertyRegistry registry) {
         registry.add("app.gemini.api-key", () -> "test-gemini-key");
         registry.add("app.gemini.model", () -> "test-model");
+        registry.add("app.gemini.fallback-models", () -> "test-model-lite");
         registry.add("app.gemini.base-url", () -> "http://127.0.0.1:" + FAKE_GEMINI.getAddress().getPort() + "/v1beta");
         registry.add("app.chat.daily-limit", () -> "5");
         registry.add("app.chat.per-prediction-limit", () -> "3");
@@ -79,12 +83,21 @@ class ChatIntegrationTest extends IntegrationTestBase {
         MODEL_ANSWER.set("{\"inScope\": true, \"answer\": \"Remove the infected leaves and keep the foliage dry.\"}");
         FINISH_REASON.set("STOP");
         STATUS.set(200);
+        BUSY_MODELS.clear();
+        CALLS.clear();
     }
 
     private static void generate(HttpExchange exchange) throws IOException {
         LAST_PATH.set(exchange.getRequestURI().getPath());
         LAST_KEY.set(exchange.getRequestHeaders().getFirst("x-goog-api-key"));
         LAST_REQUEST.set(JSON.readTree(exchange.getRequestBody()));
+        String model = exchange.getRequestURI().getPath().replaceAll(".*/models/([^:]+):.*", "$1");
+        CALLS.add(model);
+        if (BUSY_MODELS.contains(model)) {
+            reply(exchange, 503, "{\"error\":{\"code\":503,\"status\":\"UNAVAILABLE\","
+                    + "\"message\":\"This model is currently experiencing high demand.\"}}");
+            return;
+        }
         if (STATUS.get() != 200) {
             reply(exchange, STATUS.get(), "{\"error\":{\"message\":\"quota\"}}");
             return;
@@ -242,6 +255,48 @@ class ChatIntegrationTest extends IntegrationTestBase {
         mvc.perform(get("/api/predictions/" + id + "/chat").header("Authorization", "Bearer " + token))
                 .andExpect(jsonPath("$.chat.messages", hasSize(0)))
                 .andExpect(jsonPath("$.chat.remainingForScan").value(3));
+    }
+
+    @Test
+    void whenTheMainModelIsBusyABackupModelAnswers() throws Exception {
+        String token = register(uniqueEmail());
+        Integer id = scan(token, confident("potato__late_blight", "Potato", "Late Blight", false, 2));
+        BUSY_MODELS.add("test-model");                  // Google: "experiencing high demand"
+
+        ask(token, id, "Could this be insect damage?", "en")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.chat.messages[1].outcome").value("answered"))
+                .andExpect(jsonPath("$.chat.messages[1].text").value("Remove the infected leaves and keep the foliage dry."));
+        // The main model once more after a short wait, then the backup
+        assertThat(CALLS).containsExactly("test-model", "test-model", "test-model-lite");
+
+        // Every model busy: a clear message, and the question is not counted
+        BUSY_MODELS.add("test-model-lite");
+        ask(token, id, "And now?", "en")
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message").value("The assistant is busy right now. Please try again in a minute."));
+        mvc.perform(get("/api/predictions/" + id + "/chat").header("Authorization", "Bearer " + token))
+                .andExpect(jsonPath("$.chat.messages", hasSize(2)))
+                .andExpect(jsonPath("$.chat.remainingForScan").value(2));
+    }
+
+    @Test
+    void rateLimitsAndBadKeysGetTheirOwnMessages() throws Exception {
+        String token = register(uniqueEmail());
+        Integer id = scan(token, confident("potato__late_blight", "Potato", "Late Blight", false, 2));
+
+        STATUS.set(429);                                 // every model rate-limited
+        ask(token, id, "Will it spread?", "en")
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("free usage limit")));
+        assertThat(CALLS).containsExactly("test-model", "test-model-lite");   // no pointless retry on a rate limit
+
+        CALLS.clear();
+        STATUS.set(403);                                 // wrong key: another model cannot help
+        ask(token, id, "Will it spread?", "en")
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("not set up correctly")));
+        assertThat(CALLS).containsExactly("test-model");
     }
 
     @Test

@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import com.cropcare.advisory.Advice;
 import com.cropcare.advisory.AdvisoryService;
@@ -135,10 +136,15 @@ public class ChatService {
         try {
             reply = gemini.generate(systemInstruction(prediction, language), turns, limits.maxAnswerTokens());
         } catch (RestClientException | IllegalStateException e) {
-            // Not counted against the quota: nothing is saved
-            log.warn("Gemini failed: {}", e.getMessage());
-            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "The assistant is busy right now. Please try again in a minute.");
+            // Not counted against the quota: nothing is saved. Every model was tried (GeminiClient).
+            log.warn("Gemini failed on every model: {}", e.getMessage());
+            int status = e instanceof RestClientResponseException http ? http.getStatusCode().value() : 0;
+            String message = status == 429
+                    ? "The assistant has reached its free usage limit for now. Please try again in a few minutes."
+                    : status == 400 || status == 401 || status == 403
+                            ? "The assistant is not set up correctly on this server (Gemini rejected the request)."
+                            : "The assistant is busy right now. Please try again in a minute.";
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, message);
         }
 
         String answer;

@@ -38,7 +38,8 @@ export const getPredictionById = async (predictionId) => {
 };
 
 // Stored photos need the auth header, so they cannot be used as a plain <img src>.
-// imageUrl comes from the backend as "/api/predictions/{id}/images/{i}".
+// imageUrl comes from the backend as "/api/predictions/{id}/images/{i}" for photos kept on the
+// server; photos on Cloudinary come as an https link and are shown directly (see AuthImage).
 export const getPredictionImage = async (imageUrl) => {
   const response = await api.get(imageUrl.replace(/^\/api/, ""), {
     responseType: "blob",

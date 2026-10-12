@@ -41,6 +41,12 @@ See [ai-service/README.md](ai-service/README.md). In short:
   it the code is printed in the backend log for local testing). Valid 10 minutes, 5 wrong tries,
   a new code at most once a minute; stored only as an HMAC. Logging in to an unverified account
   sends a fresh code and opens the code screen. Accounts created before this feature keep working.
+- photo storage on Cloudinary: with `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` and
+  `CLOUDINARY_API_SECRET` in `backend/.env` (free account at https://cloudinary.com), each photo is
+  uploaded after the AI has analysed it, its link is saved with the scan and the local copy is deleted;
+  the app loads photos from Cloudinary's CDN, resized and re-encoded on the fly. Without the keys, or
+  if an upload fails, photos stay in `backend/uploads` as before. Photos get random names, so links
+  cannot be guessed, but anyone who has a link can open it.
 - offline mode: an installable app (PWA); after a one-time 31 MB download (Profile → Offline mode)
   the phone diagnoses with MobileNetV3 in the browser and saves photos for full analysis later.
   Try it with `npm run build && npm run preview` (the service worker only runs in a production build).

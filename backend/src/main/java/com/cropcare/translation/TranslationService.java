@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * English to another language, with a database cache in front of the translator:
- * Bhashini when its keys are set, otherwise the AI service's own NLLB model.
+ * Google Translate when its API key is set, otherwise the AI service's own NLLB model.
  * Never throws: if translation is unavailable the English text is returned and
  * {@link Result#applied()} is false.
  */
@@ -31,20 +31,20 @@ public class TranslationService {
     /** Languages we translate into; English is the source of all stored text. */
     public static final List<String> SUPPORTED = List.of("hi");
 
-    private final BhashiniClient bhashini;
+    private final GoogleTranslateClient google;
     private final LocalTranslatorClient local;
     private final TranslationRepository repository;
 
-    public TranslationService(BhashiniClient bhashini, LocalTranslatorClient local, TranslationRepository repository) {
-        this.bhashini = bhashini;
+    public TranslationService(GoogleTranslateClient google, LocalTranslatorClient local, TranslationRepository repository) {
+        this.google = google;
         this.local = local;
         this.repository = repository;
     }
 
-    /** Bhashini if it has keys, else the local model, else none (English only). */
+    /** Google Translate if its API key is set, else the local NLLB model, else none (English only). */
     Translator activeTranslator() {
-        if (bhashini.isAvailable()) {
-            return bhashini;
+        if (google.isAvailable()) {
+            return google;
         }
         return local.isAvailable() ? local : null;
     }

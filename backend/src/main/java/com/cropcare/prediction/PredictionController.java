@@ -1,5 +1,6 @@
 package com.cropcare.prediction;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +85,12 @@ public class PredictionController {
     @GetMapping("/{id}/images/{index}")
     public ResponseEntity<Resource> image(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id,
             @PathVariable int index) {
-        Path path = predictionService.image(JwtService.userId(jwt), id, index);
+        PredictionService.StoredImage image = predictionService.image(JwtService.userId(jwt), id, index);
+        if (image.url() != null) {
+            // Stored on Cloudinary: the app normally uses the link directly; this keeps old links working
+            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(image.url())).build();
+        }
+        Path path = image.file();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(ImageStorage.contentType(path)))
                 .cacheControl(CacheControl.noCache().cachePrivate())

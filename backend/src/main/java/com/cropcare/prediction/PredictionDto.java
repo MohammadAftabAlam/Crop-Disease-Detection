@@ -64,8 +64,10 @@ public record PredictionDto(
 
     static PredictionDto from(Prediction p, Advice advice, Explanation explanation,
             java.util.Map<Integer, Advice> photoAdvice) {
+        // Cloudinary photos are given as their https link; photos on this server through the API
         List<String> imageUrls = IntStream.range(0, p.getImageFilenames().size())
-                .mapToObj(i -> "/api/predictions/" + p.getId() + "/images/" + i)
+                .mapToObj(i -> CloudinaryClient.isRemote(p.getImageFilenames().get(i)) ? p.getImageFilenames().get(i)
+                        : "/api/predictions/" + p.getId() + "/images/" + i)
                 .toList();
         Severity severity = p.getSeverityPercent() == null ? null
                 : new Severity(p.getSeverityPercent(), p.getSeverityGrade(), p.getSeverityLabel());
